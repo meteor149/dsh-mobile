@@ -1,0 +1,85 @@
+name: Android
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 36
+        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Restore runtime artifacts
+        id: runtime-cache
+        uses: actions/cache@v4
+        with:
+          path: runtime/dist
+          key: runtime-${{ runner.os }}-${{ hashFiles('runtime/versions.env', 'runtime/rootfs/**', 'runtime/proot/**', 'tools/generate-runtime-manifest.mjs') }}
+
+      - name: Build runtime
+        if: steps.runtime-cache.outputs.cache-hit != 'true'
+        run: ./gradlew buildRuntime
+
+      - name: Test and package
+        run: ./gradlew :shared:testDebugUnitTest :app:testDebugUnitTest :app:assembleDebug
+
+      - name: Name APK
+        shell: bash
+        run: cp app/build/outputs/apk/debug/app-debug.apk dsh-mobile-0.0.1-BETA-arm64-v8a.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: dsh-mobile-0.0.1-BETA-arm64-v8a
+          path: dsh-mobile-0.0.1-BETA-arm64-v8a.apk
+          if-no-files-found: error
+
+      - name: Attach APK to tagged release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dsh-mobile-0.0.1-BETA-arm64-v8a.apk
+          prerelease: true
+          generate_release_notes: true

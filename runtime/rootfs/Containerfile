@@ -1,0 +1,54 @@
+ARG UBUNTU_IMAGE=ubuntu:24.04
+ARG NODE_VERSION=24.14.1
+ARG NODE_LINUX_ARM64_GZIP_SHA256
+ARG DSH_VERSION=0.1.0-rc.6
+ARG DSH_PACKAGE_INTEGRITY
+
+FROM ${UBUNTU_IMAGE} AS dsh-installer
+ARG NODE_VERSION
+ARG NODE_LINUX_ARM64_GZIP_SHA256
+ARG DSH_VERSION
+ARG DSH_PACKAGE_INTEGRITY
+ENV NODE_ENV=production
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates g++ make python3 \
+    && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
+COPY --from=node-dist /node.tar.gz /tmp/node.tar.gz
+RUN mkdir -p /opt/node \
+    && tar --extract --gzip --file /tmp/node.tar.gz --directory /opt/node --strip-components=1 \
+    && rm /tmp/node.tar.gz
+ENV PATH=/opt/node/bin:${PATH}
+COPY dsh-package/package.json dsh-package/package-lock.json /opt/dsh/
+RUN node -e "const p=require('/opt/dsh/package-lock.json').packages['node_modules/@deepseek-ai/dsh']; if (p.version !== '${DSH_VERSION}' || p.integrity !== '${DSH_PACKAGE_INTEGRITY}') process.exit(1)" \
+    && npm ci --omit=dev --no-audit --no-fund --prefix /opt/dsh \
+    && node -e "if (require('/opt/dsh/node_modules/@deepseek-ai/dsh/package.json').version !== '${DSH_VERSION}') process.exit(1)" \
+    && find /opt/dsh -type f -name '*.map' -delete
+
+FROM ${UBUNTU_IMAGE} AS runtime
+ENV DEBIAN_FRONTEND=noninteractive
+COPY --from=dsh-installer /opt/node /opt/node
+COPY --from=dsh-installer /opt/dsh /opt/dsh
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        bash ca-certificates curl git libstdc++6 openssh-client python3 ripgrep \
+    && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
+COPY gateway.mjs /opt/dsh-mobile/gateway.mjs
+COPY dsh /usr/local/bin/dsh
+COPY dsh-mobile-gateway /usr/local/bin/dsh-mobile-gateway
+RUN chmod 0755 /usr/local/bin/dsh /usr/local/bin/dsh-mobile-gateway \
+    && mkdir -p /workspace /dsh-home /root /tmp \
+    && /opt/node/bin/node /opt/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js --help >/dev/null
+
+FROM --platform=$BUILDPLATFORM ${UBUNTU_IMAGE} AS packer
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends tar zstd \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=runtime / /rootfs
+COPY --from=runtime /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+RUN mkdir -p /out \
+    && tar --numeric-owner --xattrs --acls --directory /rootfs --create --file - . \
+       | zstd -19 -o /out/dsh-ubuntu-arm64.tar.zst -
+
+FROM scratch AS artifact
+COPY --from=packer /out/dsh-ubuntu-arm64.tar.zst /

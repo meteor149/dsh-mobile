@@ -1,0 +1,17 @@
+#!/bin/sh
+backend_port="${DSH_MOBILE_BACKEND_PORT:-41237}"
+
+/opt/node/bin/node /opt/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js \
+  web --host 127.0.0.1 --port "$backend_port" < /etc/os-release &
+backend_pid=$!
+
+cleanup() {
+  kill "$backend_pid" 2>/dev/null || true
+  wait "$backend_pid" 2>/dev/null || true
+}
+trap cleanup EXIT INT TERM
+
+DSH_MOBILE_BACKEND_PORT="$backend_port" \
+  /opt/node/bin/node /opt/dsh-mobile/gateway.mjs "$@"
+status=$?
+exit "$status"
