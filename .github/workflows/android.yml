@@ -21,39 +21,39 @@ jobs:
 
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '24'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
 
       - name: Install Android SDK 36
         run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
         with:
           platforms: arm64
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Restore runtime artifacts
         id: runtime-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: runtime/dist
           key: runtime-${{ runner.os }}-${{ hashFiles('runtime/versions.env', 'runtime/rootfs/**', 'runtime/proot/**', 'tools/generate-runtime-manifest.mjs') }}
@@ -70,7 +70,7 @@ jobs:
         run: cp app/build/outputs/apk/debug/app-debug.apk dsh-mobile-0.0.1-BETA-arm64-v8a.apk
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dsh-mobile-0.0.1-BETA-arm64-v8a
           path: dsh-mobile-0.0.1-BETA-arm64-v8a.apk
@@ -78,7 +78,7 @@ jobs:
 
       - name: Attach APK to tagged release
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: dsh-mobile-0.0.1-BETA-arm64-v8a.apk
           prerelease: true
