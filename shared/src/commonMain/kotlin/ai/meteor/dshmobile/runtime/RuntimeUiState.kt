@@ -11,10 +11,31 @@ enum class RuntimePhase {
     Failed,
 }
 
+enum class RuntimeMessageKind {
+    ArtifactsUnavailable,
+    RuntimeReady,
+    RuntimeNotInstalled,
+    Installing,
+    VerifyingRootfs,
+    ExtractingUbuntu,
+    ExtractingEntries,
+    InstallComplete,
+    Starting,
+    Running,
+    Stopping,
+    Stopped,
+    Failed,
+}
+
+data class RuntimeMessage(
+    val kind: RuntimeMessageKind,
+    val count: Int? = null,
+)
+
 data class RuntimeUiState(
     val phase: RuntimePhase = RuntimePhase.Unavailable,
-    val runtimeVersion: String = "未提供制品",
-    val detail: String = "先运行 runtime 构建任务，再重新打包应用。",
+    val runtimeVersion: String = "",
+    val detail: RuntimeMessage = RuntimeMessage(RuntimeMessageKind.ArtifactsUnavailable),
     val progress: Float? = null,
     val webUrl: String? = null,
     val logTail: List<String> = emptyList(),

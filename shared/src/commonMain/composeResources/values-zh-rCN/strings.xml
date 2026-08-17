@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_line">DEEPSEEK HARNESS  ·  移动版</string>
+    <string name="private_data_note">运行环境与项目文件均保存在应用私有目录。</string>
+
+    <string name="step_install_title">安装运行时</string>
+    <string name="step_install_detail">Ubuntu 24.04 · ARM64</string>
+    <string name="step_number_install">1</string>
+    <string name="step_start_title">启动本地服务</string>
+    <string name="step_start_detail">PRoot · DSH 网关</string>
+    <string name="step_number_start">2</string>
+    <string name="step_web_title">打开 Web UI</string>
+    <string name="step_web_detail">仅限本机回环地址</string>
+    <string name="step_number_web">3</string>
+    <string name="step_complete_symbol">✓</string>
+    <string name="step_state_done">完成</string>
+    <string name="step_state_current">当前</string>
+    <string name="step_state_next">下一步</string>
+    <string name="step_state_check">检查</string>
+
+    <string name="runtime_section">运行时</string>
+    <string name="runtime_version_unavailable">未提供制品</string>
+
+    <string name="action_install">安装运行时</string>
+    <string name="action_start">启动 DeepSeek Harness</string>
+    <string name="action_open">打开 DeepSeek Harness</string>
+    <string name="action_stop">停止运行时</string>
+    <string name="action_processing">处理中…</string>
+    <string name="action_waiting">等待运行时制品</string>
+
+    <string name="title_unavailable">运行时尚未打包</string>
+    <string name="title_not_installed">准备好后，再开始安装</string>
+    <string name="title_installing">正在安装本地运行时</string>
+    <string name="title_ready">运行时已安装</string>
+    <string name="title_starting">正在启动 Harness</string>
+    <string name="title_running">DeepSeek Harness 已就绪</string>
+    <string name="title_stopping">正在停止本地服务</string>
+    <string name="title_failed">运行时需要处理</string>
+
+    <string name="phase_unavailable">无制品</string>
+    <string name="phase_not_installed">可安装</string>
+    <string name="phase_installing">安装中</string>
+    <string name="phase_ready">就绪</string>
+    <string name="phase_starting">启动中</string>
+    <string name="phase_running">在线</string>
+    <string name="phase_stopping">停止中</string>
+    <string name="phase_failed">失败</string>
+
+    <string name="detail_artifacts_unavailable">APK 中没有运行时制品。请运行 buildRuntime 后重新构建应用。</string>
+    <string name="detail_runtime_ready">Ubuntu 和 DeepSeek Harness 已安装，可以启动本地服务。</string>
+    <string name="detail_runtime_not_installed">已验证 APK 内的运行时清单，等待首次安装。</string>
+    <string name="detail_installing">正在校验并展开版本化 Ubuntu 根文件系统。</string>
+    <string name="detail_verifying_rootfs">正在校验根文件系统</string>
+    <string name="detail_extracting_ubuntu">正在展开 Ubuntu</string>
+    <string name="detail_extracting_entries">正在展开 Ubuntu · %1$d 项</string>
+    <string name="detail_install_complete">安装完成</string>
+    <string name="detail_starting">正在启动 PRoot、Ubuntu 和认证网关。</string>
+    <string name="detail_running">认证后的 Web UI 仅通过本机回环地址提供。</string>
+    <string name="detail_stopping">正在停止全部子进程。</string>
+    <string name="detail_stopped">运行时已停止，Ubuntu 数据仍保留在应用私有目录。</string>
+    <string name="detail_failed">运行时操作失败。请检查运行日志后重试。</string>
+</resources>

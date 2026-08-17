@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_line">DEEPSEEK HARNESS  ·  MOBILE</string>
+    <string name="private_data_note">The runtime environment and project files are stored in the app-private directory.</string>
+
+    <string name="step_install_title">Install runtime</string>
+    <string name="step_install_detail">Ubuntu 24.04 · ARM64</string>
+    <string name="step_number_install">1</string>
+    <string name="step_start_title">Start local service</string>
+    <string name="step_start_detail">PRoot · DSH gateway</string>
+    <string name="step_number_start">2</string>
+    <string name="step_web_title">Open Web UI</string>
+    <string name="step_web_detail">Local loopback only</string>
+    <string name="step_number_web">3</string>
+    <string name="step_complete_symbol">✓</string>
+    <string name="step_state_done">DONE</string>
+    <string name="step_state_current">CURRENT</string>
+    <string name="step_state_next">NEXT</string>
+    <string name="step_state_check">CHECK</string>
+
+    <string name="runtime_section">RUNTIME</string>
+    <string name="runtime_version_unavailable">No artifact provided</string>
+
+    <string name="action_install">Install runtime</string>
+    <string name="action_start">Start DeepSeek Harness</string>
+    <string name="action_open">Open DeepSeek Harness</string>
+    <string name="action_stop">Stop runtime</string>
+    <string name="action_processing">Processing…</string>
+    <string name="action_waiting">Waiting for runtime artifacts</string>
+
+    <string name="title_unavailable">Runtime is not packaged</string>
+    <string name="title_not_installed">Install when you are ready</string>
+    <string name="title_installing">Installing the local runtime</string>
+    <string name="title_ready">Runtime installed</string>
+    <string name="title_starting">Starting Harness</string>
+    <string name="title_running">DeepSeek Harness is ready</string>
+    <string name="title_stopping">Stopping the local service</string>
+    <string name="title_failed">Runtime needs attention</string>
+
+    <string name="phase_unavailable">NO ARTIFACT</string>
+    <string name="phase_not_installed">AVAILABLE</string>
+    <string name="phase_installing">INSTALLING</string>
+    <string name="phase_ready">READY</string>
+    <string name="phase_starting">BOOTING</string>
+    <string name="phase_running">ONLINE</string>
+    <string name="phase_stopping">STOPPING</string>
+    <string name="phase_failed">FAILED</string>
+
+    <string name="detail_artifacts_unavailable">This APK does not contain runtime artifacts. Run buildRuntime and rebuild the app.</string>
+    <string name="detail_runtime_ready">Ubuntu and DeepSeek Harness are installed. The local service is ready to start.</string>
+    <string name="detail_runtime_not_installed">The runtime manifest in the APK has been verified and is ready for first-time installation.</string>
+    <string name="detail_installing">Verifying and extracting the versioned Ubuntu rootfs.</string>
+    <string name="detail_verifying_rootfs">Verifying rootfs</string>
+    <string name="detail_extracting_ubuntu">Extracting Ubuntu</string>
+    <string name="detail_extracting_entries">Extracting Ubuntu · %1$d entries</string>
+    <string name="detail_install_complete">Installation complete</string>
+    <string name="detail_starting">Starting PRoot, Ubuntu, and the authenticated gateway.</string>
+    <string name="detail_running">The authenticated Web UI is available only through the local loopback address.</string>
+    <string name="detail_stopping">Stopping all child processes.</string>
+    <string name="detail_stopped">The runtime has stopped. Ubuntu data remains in the app-private directory.</string>
+    <string name="detail_failed">The runtime operation failed. Check the runtime log and try again.</string>
+</resources>

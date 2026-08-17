@@ -6,10 +6,12 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import androidx.annotation.StringRes
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import ai.meteor.dshmobile.MainActivity
+import ai.meteor.dshmobile.R
 import ai.meteor.dshmobile.runtime.RuntimePhase.Running
 import kotlinx.coroutines.launch
 
@@ -24,7 +26,12 @@ class RuntimeService : LifecycleService() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         val action = intent?.action ?: ACTION_START
-        startForeground(NOTIFICATION_ID, notification(if (action == ACTION_INSTALL) "正在安装运行时" else "运行时正在启动"))
+        startForeground(
+            NOTIFICATION_ID,
+            notification(
+                if (action == ACTION_INSTALL) R.string.notification_installing else R.string.notification_starting,
+            ),
+        )
         lifecycleScope.launch {
             when (action) {
                 ACTION_INSTALL -> {
@@ -35,7 +42,7 @@ class RuntimeService : LifecycleService() {
             }
             if (RuntimeStateStore.state.value.phase == Running) {
                 getSystemService(NotificationManager::class.java)
-                    .notify(NOTIFICATION_ID, notification("DeepSeek Harness 正在运行"))
+                    .notify(NOTIFICATION_ID, notification(R.string.notification_running))
             } else {
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf(startId)
@@ -44,10 +51,10 @@ class RuntimeService : LifecycleService() {
         return Service.START_NOT_STICKY
     }
 
-    private fun notification(message: String) = NotificationCompat.Builder(this, CHANNEL_ID)
+    private fun notification(@StringRes message: Int) = NotificationCompat.Builder(this, CHANNEL_ID)
         .setSmallIcon(android.R.drawable.stat_notify_sync)
-        .setContentTitle("DSH Mobile")
-        .setContentText(message)
+        .setContentTitle(getString(R.string.app_name))
+        .setContentText(getString(message))
         .setOngoing(RuntimeStateStore.state.value.phase == Running)
         .setContentIntent(
             PendingIntent.getActivity(
@@ -59,7 +66,7 @@ class RuntimeService : LifecycleService() {
         )
         .addAction(
             android.R.drawable.ic_media_pause,
-            "停止",
+            getString(R.string.notification_stop),
             PendingIntent.getService(
                 this,
                 1,
@@ -72,10 +79,10 @@ class RuntimeService : LifecycleService() {
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "本地运行时",
+            getString(R.string.notification_channel_name),
             NotificationManager.IMPORTANCE_LOW,
         ).apply {
-            description = "显示 Ubuntu 和 DeepSeek Harness 的运行状态"
+            description = getString(R.string.notification_channel_description)
         }
         getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
     }

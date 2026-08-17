@@ -36,7 +36,7 @@ class RootfsInstaller(
 
     suspend fun install(
         manifest: RuntimeManifest = artifacts.readManifest(),
-        onProgress: (Float, String) -> Unit = { _, _ -> },
+        onProgress: (Float, RuntimeMessage) -> Unit = { _, _ -> },
     ): InstalledRuntime = InstallMutex.withLock {
         withContext(Dispatchers.IO) {
             require(manifest.available) { "This APK does not contain a runtime artifact" }
@@ -57,9 +57,9 @@ class RootfsInstaller(
             Files.createDirectories(staging)
 
             try {
-                onProgress(0.03f, "校验 rootfs")
+                onProgress(0.03f, RuntimeMessage(RuntimeMessageKind.VerifyingRootfs))
                 verifyRootfs(manifest)
-                onProgress(0.12f, "展开 Ubuntu")
+                onProgress(0.12f, RuntimeMessage(RuntimeMessageKind.ExtractingUbuntu))
                 extractRootfs(manifest, staging.resolve("rootfs"), onProgress)
                 validateRootfs(staging.resolve("rootfs"))
                 Files.write(staging.resolve(INSTALL_MARKER), "${manifest.runtimeVersion}\n".encodeToByteArray())
@@ -68,7 +68,7 @@ class RootfsInstaller(
                 deleteTree(target)
                 moveAtomically(staging, target)
                 deleteObsoleteVersions(target)
-                onProgress(1f, "安装完成")
+                onProgress(1f, RuntimeMessage(RuntimeMessageKind.InstallComplete))
                 installed
             } catch (error: Throwable) {
                 deleteTree(staging)
@@ -113,7 +113,7 @@ class RootfsInstaller(
     private suspend fun extractRootfs(
         manifest: RuntimeManifest,
         destination: Path,
-        onProgress: (Float, String) -> Unit,
+        onProgress: (Float, RuntimeMessage) -> Unit,
     ) {
         Files.createDirectories(destination)
         val pendingHardLinks = mutableListOf<PendingHardLink>()
@@ -128,7 +128,10 @@ class RootfsInstaller(
                         entries++
                         if (entries % PROGRESS_ENTRY_INTERVAL == 0) {
                             val progress = (0.12f + entries / PROGRESS_ENTRY_SCALE).coerceAtMost(0.92f)
-                            onProgress(progress, "展开 Ubuntu · $entries 项")
+                            onProgress(
+                                progress,
+                                RuntimeMessage(RuntimeMessageKind.ExtractingEntries, count = entries),
+                            )
                         }
                     }
                 }

@@ -1,6 +1,7 @@
 package ai.meteor.dshmobile.runtime
 
 import android.content.Context
+import android.util.Log
 import ai.meteor.dshmobile.runtime.RuntimePhase.Failed
 import ai.meteor.dshmobile.runtime.RuntimePhase.Installing
 import ai.meteor.dshmobile.runtime.RuntimePhase.NotInstalled
@@ -43,17 +44,17 @@ class RuntimeManager private constructor(context: Context) {
                 !manifest.available -> RuntimeUiState(
                     phase = Unavailable,
                     runtimeVersion = manifest.runtimeVersion,
-                    detail = "APK 中没有 runtime 制品。运行 buildRuntime 后重新构建应用。",
+                    detail = RuntimeMessage(RuntimeMessageKind.ArtifactsUnavailable),
                 )
                 installer.probe(manifest) != null -> RuntimeUiState(
                     phase = Ready,
                     runtimeVersion = manifest.runtimeVersion,
-                    detail = "Ubuntu 和 DeepSeek Harness 已安装，可以启动本地服务。",
+                    detail = RuntimeMessage(RuntimeMessageKind.RuntimeReady),
                 )
                 else -> RuntimeUiState(
                     phase = NotInstalled,
                     runtimeVersion = manifest.runtimeVersion,
-                    detail = "已验证 APK 内的 runtime 清单，等待首次安装。",
+                    detail = RuntimeMessage(RuntimeMessageKind.RuntimeNotInstalled),
                 )
             }
         }.getOrElse(::failureState).also(RuntimeStateStore::set)
@@ -66,7 +67,7 @@ class RuntimeManager private constructor(context: Context) {
                 RuntimeUiState(
                     phase = Installing,
                     runtimeVersion = manifest.runtimeVersion,
-                    detail = "正在校验并展开版本化 Ubuntu rootfs。",
+                    detail = RuntimeMessage(RuntimeMessageKind.Installing),
                     progress = 0f,
                 ),
             )
@@ -82,7 +83,7 @@ class RuntimeManager private constructor(context: Context) {
             RuntimeUiState(
                 phase = Ready,
                 runtimeVersion = manifest.runtimeVersion,
-                detail = "Ubuntu 和 DeepSeek Harness 已安装，可以启动本地服务。",
+                detail = RuntimeMessage(RuntimeMessageKind.RuntimeReady),
             )
         }.getOrElse(::failureState).also(RuntimeStateStore::set)
     }
@@ -95,7 +96,7 @@ class RuntimeManager private constructor(context: Context) {
                 RuntimeUiState(
                     phase = Starting,
                     runtimeVersion = manifest.runtimeVersion,
-                    detail = "正在启动 PRoot、Ubuntu 和认证网关。",
+                    detail = RuntimeMessage(RuntimeMessageKind.Starting),
                 ),
             )
             val session = supervisor.start(
@@ -112,7 +113,7 @@ class RuntimeManager private constructor(context: Context) {
             RuntimeUiState(
                 phase = Running,
                 runtimeVersion = manifest.runtimeVersion,
-                detail = "认证后的 Web UI 仅通过本机回环地址提供。",
+                detail = RuntimeMessage(RuntimeMessageKind.Running),
                 webUrl = session.authenticatedUrl,
                 logTail = RuntimeStateStore.state.value.logTail,
             )
@@ -121,7 +122,12 @@ class RuntimeManager private constructor(context: Context) {
 
     suspend fun stop() = operationMutex.withLock {
         val version = RuntimeStateStore.state.value.runtimeVersion
-        RuntimeStateStore.set(RuntimeStateStore.state.value.copy(phase = Stopping, detail = "正在停止全部子进程。"))
+        RuntimeStateStore.set(
+            RuntimeStateStore.state.value.copy(
+                phase = Stopping,
+                detail = RuntimeMessage(RuntimeMessageKind.Stopping),
+            ),
+        )
         runCatching { supervisor.stop() }
             .fold(
                 onSuccess = {
@@ -129,7 +135,7 @@ class RuntimeManager private constructor(context: Context) {
                         RuntimeUiState(
                             phase = Ready,
                             runtimeVersion = version,
-                            detail = "运行时已停止，Ubuntu 数据仍保留在应用私有目录。",
+                            detail = RuntimeMessage(RuntimeMessageKind.Stopped),
                         ),
                     )
                 },
@@ -137,12 +143,15 @@ class RuntimeManager private constructor(context: Context) {
             )
     }
 
-    private fun failureState(error: Throwable): RuntimeUiState = RuntimeUiState(
-        phase = Failed,
-        runtimeVersion = RuntimeStateStore.state.value.runtimeVersion,
-        detail = error.message ?: error::class.simpleName ?: "Unknown runtime error",
-        logTail = RuntimeStateStore.state.value.logTail,
-    )
+    private fun failureState(error: Throwable): RuntimeUiState {
+        Log.e(LOG_TAG, "Runtime operation failed", error)
+        return RuntimeUiState(
+            phase = Failed,
+            runtimeVersion = RuntimeStateStore.state.value.runtimeVersion,
+            detail = RuntimeMessage(RuntimeMessageKind.Failed),
+            logTail = RuntimeStateStore.state.value.logTail,
+        )
+    }
 
     companion object {
         @Volatile
@@ -155,3 +164,4 @@ class RuntimeManager private constructor(context: Context) {
 }
 
 private const val MAX_UI_LOG_LINES = 80
+private const val LOG_TAG = "RuntimeManager"

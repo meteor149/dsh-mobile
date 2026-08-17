@@ -35,8 +35,12 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import ai.meteor.dshmobile.resources.*
+import ai.meteor.dshmobile.runtime.RuntimeMessage
+import ai.meteor.dshmobile.runtime.RuntimeMessageKind
 import ai.meteor.dshmobile.runtime.RuntimePhase
 import ai.meteor.dshmobile.runtime.RuntimeUiState
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun DshMobileApp(
@@ -67,7 +71,7 @@ fun DshMobileApp(
                     .padding(horizontal = 24.dp, vertical = 24.dp),
             ) {
                 Text(
-                    text = "DEEPSEEK HARNESS  ·  MOBILE",
+                    text = stringResource(Res.string.brand_line),
                     color = DeepSeekBlue,
                     fontFamily = FontFamily.Monospace,
                     fontSize = 11.sp,
@@ -81,7 +85,7 @@ fun DshMobileApp(
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = state.detail,
+                    text = detailFor(state.detail),
                     color = SecondaryInk,
                     style = MaterialTheme.typography.bodyLarge,
                 )
@@ -100,7 +104,7 @@ fun DshMobileApp(
                 )
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    text = "运行环境与项目文件均保存在应用私有目录。",
+                    text = stringResource(Res.string.private_data_note),
                     modifier = Modifier.fillMaxWidth(),
                     color = CaptionInk,
                     fontSize = 12.sp,
@@ -120,23 +124,23 @@ private fun SetupSteps(phase: RuntimePhase) {
     ) {
         Column(Modifier.padding(horizontal = 18.dp, vertical = 8.dp)) {
             StepRow(
-                number = "1",
-                title = "安装运行时",
-                detail = "Ubuntu 24.04 · ARM64",
+                number = stringResource(Res.string.step_number_install),
+                title = stringResource(Res.string.step_install_title),
+                detail = stringResource(Res.string.step_install_detail),
                 state = installStepState(phase),
             )
             HorizontalDivider(color = Hairline)
             StepRow(
-                number = "2",
-                title = "启动本地服务",
-                detail = "PRoot · DSH gateway",
+                number = stringResource(Res.string.step_number_start),
+                title = stringResource(Res.string.step_start_title),
+                detail = stringResource(Res.string.step_start_detail),
                 state = startStepState(phase),
             )
             HorizontalDivider(color = Hairline)
             StepRow(
-                number = "3",
-                title = "打开 Web UI",
-                detail = "仅限本机回环地址",
+                number = stringResource(Res.string.step_number_web),
+                title = stringResource(Res.string.step_web_title),
+                detail = stringResource(Res.string.step_web_detail),
                 state = webStepState(phase),
             )
         }
@@ -172,7 +176,11 @@ private fun StepRow(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = if (state == StepState.Complete) "✓" else number,
+                text = if (state == StepState.Complete) {
+                    stringResource(Res.string.step_complete_symbol)
+                } else {
+                    number
+                },
                 color = accent,
                 fontFamily = FontFamily.Monospace,
                 fontSize = 12.sp,
@@ -213,7 +221,7 @@ private fun RuntimeCard(state: RuntimeUiState) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "RUNTIME",
+                    text = stringResource(Res.string.runtime_section),
                     color = CaptionInk,
                     fontFamily = FontFamily.Monospace,
                     fontSize = 10.sp,
@@ -223,7 +231,7 @@ private fun RuntimeCard(state: RuntimeUiState) {
             }
             Spacer(Modifier.height(12.dp))
             Text(
-                text = state.runtimeVersion,
+                text = state.runtimeVersion.ifEmpty { stringResource(Res.string.runtime_version_unavailable) },
                 fontFamily = FontFamily.Monospace,
                 fontSize = 13.sp,
                 color = Ink,
@@ -292,14 +300,14 @@ private fun RuntimeActions(
             modifier = Modifier.fillMaxWidth().height(52.dp),
             shape = RoundedCornerShape(26.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Ink),
-        ) { Text("安装运行时") }
+        ) { Text(stringResource(Res.string.action_install)) }
 
         RuntimePhase.Ready -> Button(
             onClick = onStart,
             modifier = Modifier.fillMaxWidth().height(52.dp),
             shape = RoundedCornerShape(26.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Ink),
-        ) { Text("启动 DeepSeek Harness") }
+        ) { Text(stringResource(Res.string.action_start)) }
 
         RuntimePhase.Running -> Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Button(
@@ -307,14 +315,14 @@ private fun RuntimeActions(
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(26.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Ink),
-            ) { Text("打开 DeepSeek Harness") }
+            ) { Text(stringResource(Res.string.action_open)) }
             OutlinedButton(
                 onClick = onStop,
                 modifier = Modifier.fillMaxWidth().height(48.dp),
                 shape = RoundedCornerShape(24.dp),
                 border = BorderStroke(1.dp, Hairline),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = SecondaryInk),
-            ) { Text("停止运行时") }
+            ) { Text(stringResource(Res.string.action_stop)) }
         }
 
         else -> Button(
@@ -322,7 +330,13 @@ private fun RuntimeActions(
             enabled = false,
             modifier = Modifier.fillMaxWidth().height(52.dp),
             shape = RoundedCornerShape(26.dp),
-        ) { Text(if (phase.isBusyPhase()) "处理中…" else "等待运行时制品") }
+        ) {
+            Text(
+                stringResource(
+                    if (phase.isBusyPhase()) Res.string.action_processing else Res.string.action_waiting,
+                ),
+            )
+        }
     }
 }
 
@@ -348,11 +362,12 @@ private fun webStepState(phase: RuntimePhase): StepState = when (phase) {
     else -> StepState.Pending
 }
 
+@Composable
 private fun stepLabel(state: StepState): String = when (state) {
-    StepState.Complete -> "DONE"
-    StepState.Active -> "CURRENT"
-    StepState.Pending -> "NEXT"
-    StepState.Error -> "CHECK"
+    StepState.Complete -> stringResource(Res.string.step_state_done)
+    StepState.Active -> stringResource(Res.string.step_state_current)
+    StepState.Pending -> stringResource(Res.string.step_state_next)
+    StepState.Error -> stringResource(Res.string.step_state_check)
 }
 
 private fun RuntimePhase.isBusyPhase(): Boolean = this in setOf(
@@ -361,24 +376,46 @@ private fun RuntimePhase.isBusyPhase(): Boolean = this in setOf(
     RuntimePhase.Stopping,
 )
 
+@Composable
 private fun titleFor(phase: RuntimePhase): String = when (phase) {
-    RuntimePhase.Unavailable -> "运行时尚未打包"
-    RuntimePhase.NotInstalled -> "准备好后，再开始安装"
-    RuntimePhase.Installing -> "正在安装本地运行时"
-    RuntimePhase.Ready -> "运行时已安装"
-    RuntimePhase.Starting -> "正在启动 Harness"
-    RuntimePhase.Running -> "DeepSeek Harness 已就绪"
-    RuntimePhase.Stopping -> "正在停止本地服务"
-    RuntimePhase.Failed -> "运行时需要处理"
+    RuntimePhase.Unavailable -> stringResource(Res.string.title_unavailable)
+    RuntimePhase.NotInstalled -> stringResource(Res.string.title_not_installed)
+    RuntimePhase.Installing -> stringResource(Res.string.title_installing)
+    RuntimePhase.Ready -> stringResource(Res.string.title_ready)
+    RuntimePhase.Starting -> stringResource(Res.string.title_starting)
+    RuntimePhase.Running -> stringResource(Res.string.title_running)
+    RuntimePhase.Stopping -> stringResource(Res.string.title_stopping)
+    RuntimePhase.Failed -> stringResource(Res.string.title_failed)
 }
 
+@Composable
 private fun phaseLabel(phase: RuntimePhase): String = when (phase) {
-    RuntimePhase.Unavailable -> "NO ARTIFACT"
-    RuntimePhase.NotInstalled -> "AVAILABLE"
-    RuntimePhase.Installing -> "INSTALLING"
-    RuntimePhase.Ready -> "READY"
-    RuntimePhase.Starting -> "BOOTING"
-    RuntimePhase.Running -> "ONLINE"
-    RuntimePhase.Stopping -> "STOPPING"
-    RuntimePhase.Failed -> "FAILED"
+    RuntimePhase.Unavailable -> stringResource(Res.string.phase_unavailable)
+    RuntimePhase.NotInstalled -> stringResource(Res.string.phase_not_installed)
+    RuntimePhase.Installing -> stringResource(Res.string.phase_installing)
+    RuntimePhase.Ready -> stringResource(Res.string.phase_ready)
+    RuntimePhase.Starting -> stringResource(Res.string.phase_starting)
+    RuntimePhase.Running -> stringResource(Res.string.phase_running)
+    RuntimePhase.Stopping -> stringResource(Res.string.phase_stopping)
+    RuntimePhase.Failed -> stringResource(Res.string.phase_failed)
+}
+
+@Composable
+private fun detailFor(message: RuntimeMessage): String = when (message.kind) {
+    RuntimeMessageKind.ArtifactsUnavailable -> stringResource(Res.string.detail_artifacts_unavailable)
+    RuntimeMessageKind.RuntimeReady -> stringResource(Res.string.detail_runtime_ready)
+    RuntimeMessageKind.RuntimeNotInstalled -> stringResource(Res.string.detail_runtime_not_installed)
+    RuntimeMessageKind.Installing -> stringResource(Res.string.detail_installing)
+    RuntimeMessageKind.VerifyingRootfs -> stringResource(Res.string.detail_verifying_rootfs)
+    RuntimeMessageKind.ExtractingUbuntu -> stringResource(Res.string.detail_extracting_ubuntu)
+    RuntimeMessageKind.ExtractingEntries -> stringResource(
+        Res.string.detail_extracting_entries,
+        requireNotNull(message.count),
+    )
+    RuntimeMessageKind.InstallComplete -> stringResource(Res.string.detail_install_complete)
+    RuntimeMessageKind.Starting -> stringResource(Res.string.detail_starting)
+    RuntimeMessageKind.Running -> stringResource(Res.string.detail_running)
+    RuntimeMessageKind.Stopping -> stringResource(Res.string.detail_stopping)
+    RuntimeMessageKind.Stopped -> stringResource(Res.string.detail_stopped)
+    RuntimeMessageKind.Failed -> stringResource(Res.string.detail_failed)
 }

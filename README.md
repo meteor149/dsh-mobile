@@ -1,16 +1,16 @@
 # DSH Mobile
 
 [![Android](https://github.com/meteor149/dsh-mobile/actions/workflows/android.yml/badge.svg)](https://github.com/meteor149/dsh-mobile/actions/workflows/android.yml)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+
+English | [Simplified Chinese](Docs/README.zh-CN.md)
 
 DSH Mobile is an unofficial Android host for
 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness). It runs the
 official DSH Web UI inside an app-private Ubuntu ARM64 environment and opens it
 in a restricted local WebView.
 
-> Beta software. The current release supports `arm64-v8a` devices running
-> Android 9 or newer.
-
-## Features
+## Highlights
 
 - explicit install, start, and open steps—nothing is installed on first launch;
 - versioned Ubuntu 24.04 rootfs with checksum verification;
@@ -19,16 +19,23 @@ in a restricted local WebView.
 - WebView navigation restricted to the local DSH origin;
 - runtime and workspace data stored in the app-private directory.
 
+## Requirements
+
+- an `arm64-v8a` Android device;
+- Android 9 or newer.
+
 ## Install
 
-Download the APK from [GitHub Actions](https://github.com/meteor149/dsh-mobile/actions/workflows/android.yml)
-or a tagged [release](https://github.com/meteor149/dsh-mobile/releases).
+For the latest development build, open a successful [GitHub Actions run](https://github.com/meteor149/dsh-mobile/actions/workflows/android.yml)
+and download the APK from its **Artifacts** section. Tagged builds are also
+published on the [Releases](https://github.com/meteor149/dsh-mobile/releases)
+page.
 
 On first launch:
 
-1. tap **安装运行时**;
-2. tap **启动 DeepSeek Harness**;
-3. open the Web UI and finish model setup there.
+1. install the runtime;
+2. start DeepSeek Harness;
+3. open the Web UI and finish the model setup there.
 
 Pressing Back in the Web UI sends the app to the background; the local runtime
 keeps running until it is stopped from the app or notification.
@@ -72,10 +79,6 @@ PRoot does not grant root privileges and is not a security boundary. DSH runs
 with the Android application UID. See [`runtime/README.md`](runtime/README.md)
 for the runtime layout, artifact contract, and update process.
 
-## Project identity
+## License
 
-- Package: `ai.meteor.dshmobile`
-- Version: `0.0.1-BETA`
-- DeepSeek Harness and Termux remain the property of their respective projects.
-
-This project is not affiliated with or endorsed by DeepSeek.
+Licensed under the [Apache License 2.0](LICENSE).

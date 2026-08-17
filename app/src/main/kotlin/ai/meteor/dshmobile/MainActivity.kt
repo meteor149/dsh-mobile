@@ -46,7 +46,7 @@ class MainActivity : ComponentActivity() {
                 if (state.phase == RuntimePhase.Running && webUrl != null && showWebView) {
                     RuntimeWebView(
                         url = webUrl,
-                        onBackToHome = ::returnToHome,
+                        onBackToBackground = ::sendTaskToBackground,
                     )
                 } else {
                     DshMobileApp(
@@ -65,19 +65,15 @@ class MainActivity : ComponentActivity() {
         ContextCompat.startForegroundService(this, RuntimeService.intent(this, action))
     }
 
-    private fun returnToHome() {
-        startActivity(
-            Intent(Intent.ACTION_MAIN)
-                .addCategory(Intent.CATEGORY_HOME)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        )
+    private fun sendTaskToBackground() {
+        moveTaskToBack(true)
     }
 }
 
 @androidx.compose.runtime.Composable
 private fun RuntimeWebView(
     url: String,
-    onBackToHome: () -> Unit,
+    onBackToBackground: () -> Unit,
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val expected = androidx.compose.runtime.remember(url) { url.toUri() }
@@ -91,7 +87,7 @@ private fun RuntimeWebView(
         }
     }
 
-    BackHandler(onBack = onBackToHome)
+    BackHandler(onBack = onBackToBackground)
     androidx.compose.runtime.DisposableEffect(webView) {
         onDispose {
             webView.stopLoading()
