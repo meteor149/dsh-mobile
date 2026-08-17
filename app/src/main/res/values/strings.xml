@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">DSH Mobile</string>
-    <string name="foreground_service_subtype">Runs the app-private Ubuntu and DeepSeek Harness process tree while the user is coding.</string>
+    <string name="foreground_service_subtype" translatable="false">Runs the app-private Ubuntu and DeepSeek Harness process tree while the user is coding.</string>
     <string name="notification_installing">Installing runtime</string>
     <string name="notification_starting">Starting runtime</string>
     <string name="notification_running">DeepSeek Harness is running</string>

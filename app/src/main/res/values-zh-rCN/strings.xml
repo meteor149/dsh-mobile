@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">DSH Mobile</string>
-    <string name="foreground_service_subtype">在用户编程时运行应用私有的 Ubuntu 和 DeepSeek Harness 进程树。</string>
     <string name="notification_installing">正在安装运行时</string>
     <string name="notification_starting">运行时正在启动</string>
     <string name="notification_running">DeepSeek Harness 正在运行</string>

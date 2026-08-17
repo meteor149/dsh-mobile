@@ -6,6 +6,15 @@ on:
     tags: ['v*']
   pull_request:
   workflow_dispatch:
+    inputs:
+      publish_release:
+        description: Publish the APK to the versioned GitHub prerelease
+        required: true
+        type: boolean
+        default: false
+
+env:
+  APP_VERSION: 0.0.1-BETA
 
 permissions:
   contents: write
@@ -62,24 +71,85 @@ jobs:
         if: steps.runtime-cache.outputs.cache-hit != 'true'
         run: ./gradlew buildRuntime
 
-      - name: Test and package
-        run: ./gradlew :shared:testDebugUnitTest :app:testDebugUnitTest :app:assembleDebug
-
-      - name: Name APK
+      - name: Resolve release metadata
+        id: release
         shell: bash
-        run: cp app/build/outputs/apk/debug/app-debug.apk dsh-mobile-0.0.1-BETA-arm64-v8a.apk
+        run: |
+          publish=false
+          tag="v$APP_VERSION"
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            publish=true
+            tag="$GITHUB_REF_NAME"
+            if [[ "$tag" != "v$APP_VERSION" ]]; then
+              echo "Tag $tag does not match app version v$APP_VERSION" >&2
+              exit 1
+            fi
+          elif [[ "$GITHUB_EVENT_NAME" == workflow_dispatch && "${{ inputs.publish_release }}" == true ]]; then
+            publish=true
+          fi
+          echo "publish=$publish" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare release signing
+        id: signing
+        shell: bash
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_RELEASE_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_RELEASE_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}
+        run: |
+          if [[ -z "$KEYSTORE_BASE64" || -z "$STORE_PASSWORD" || -z "$KEY_ALIAS" || -z "$KEY_PASSWORD" ]]; then
+            if [[ "${{ steps.release.outputs.publish }}" == true ]]; then
+              echo "Release publishing requires all ANDROID_RELEASE_* secrets" >&2
+              exit 1
+            fi
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          keystore="$RUNNER_TEMP/dsh-mobile-release.jks"
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$keystore"
+          echo "ANDROID_RELEASE_STORE_FILE=$keystore" >> "$GITHUB_ENV"
+          echo "ANDROID_RELEASE_STORE_PASSWORD=$STORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "ANDROID_RELEASE_KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "ANDROID_RELEASE_KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
+          echo "signed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Test and package
+        run: ./gradlew :shared:testDebugUnitTest :app:testDebugUnitTest :app:assembleRelease
+
+      - name: Stage release APK
+        id: package
+        shell: bash
+        run: |
+          if [[ "${{ steps.signing.outputs.signed }}" == true ]]; then
+            source_apk=app/build/outputs/apk/release/app-release.apk
+            artifact_name="dsh-mobile-$APP_VERSION-arm64-v8a"
+          else
+            source_apk=app/build/outputs/apk/release/app-release-unsigned.apk
+            artifact_name="dsh-mobile-$APP_VERSION-arm64-v8a-unsigned"
+          fi
+          test -f "$source_apk"
+          apk_name="$artifact_name.apk"
+          cp "$source_apk" "$apk_name"
+          echo "artifact_name=$artifact_name" >> "$GITHUB_OUTPUT"
+          echo "apk_name=$apk_name" >> "$GITHUB_OUTPUT"
 
       - name: Upload APK
         uses: actions/upload-artifact@v7
         with:
-          name: dsh-mobile-0.0.1-BETA-arm64-v8a
-          path: dsh-mobile-0.0.1-BETA-arm64-v8a.apk
+          name: ${{ steps.package.outputs.artifact_name }}
+          path: ${{ steps.package.outputs.apk_name }}
           if-no-files-found: error
 
-      - name: Attach APK to tagged release
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Publish APK to GitHub Release
+        if: steps.release.outputs.publish == 'true'
         uses: softprops/action-gh-release@v3
         with:
-          files: dsh-mobile-0.0.1-BETA-arm64-v8a.apk
+          tag_name: ${{ steps.release.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: DSH Mobile ${{ env.APP_VERSION }}
+          files: ${{ steps.package.outputs.apk_name }}
+          fail_on_unmatched_files: true
           prerelease: true
           generate_release_notes: true
