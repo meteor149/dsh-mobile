@@ -3,7 +3,7 @@
 [![Android](https://github.com/meteor149/dsh-mobile/actions/workflows/android.yml/badge.svg)](https://github.com/meteor149/dsh-mobile/actions/workflows/android.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-English | [Simplified Chinese](Docs/README.zh-CN.md)
+English | [简体中文](Docs/README.zh-CN.md)
 
 DSH Mobile is an unofficial Android host for
 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness). It runs the
