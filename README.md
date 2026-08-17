@@ -1,9 +1,19 @@
-# DSH Mobile
+<p align="center">
+  <img src="Docs/assets/readme-hero.webp" alt="DSH Mobile whale mascot using a phone" width="100%" />
+</p>
 
-[![Android](https://github.com/meteor149/dsh-mobile/actions/workflows/android.yml/badge.svg)](https://github.com/meteor149/dsh-mobile/actions/workflows/android.yml)
-[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+<h1 align="center">DSH Mobile</h1>
 
-English | [简体中文](Docs/README.zh-CN.md)
+<p align="center"><strong>Run DeepSeek Harness locally on Android.</strong></p>
+
+<p align="center">
+  <a href="https://github.com/meteor149/dsh-mobile/actions/workflows/android.yml"><img src="https://github.com/meteor149/dsh-mobile/actions/workflows/android.yml/badge.svg" alt="Android build" /></a>
+  <img src="https://img.shields.io/badge/Android-9%2B-3DDC84?logo=android&amp;logoColor=white" alt="Android 9 or newer" />
+  <img src="https://img.shields.io/badge/ABI-arm64--v8a-4C6EF5" alt="arm64-v8a" />
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="Apache License 2.0" /></a>
+</p>
+
+<p align="center"><strong>English</strong> · <a href="Docs/README.zh-CN.md">简体中文</a></p>
 
 DSH Mobile is an unofficial Android host for
 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness). It runs the
@@ -12,12 +22,12 @@ in a restricted local WebView.
 
 ## Highlights
 
-- explicit install, start, and open steps—nothing is installed on first launch;
-- versioned Ubuntu 24.04 rootfs with checksum verification;
-- Termux-patched PRoot, supervised by an Android foreground service;
-- authenticated loopback gateway for HTTP, SSE, and WebSocket traffic;
-- WebView navigation restricted to the local DSH origin;
-- runtime and workspace data stored in the app-private directory.
+- **Explicit lifecycle** — install, start, and open only when you choose; nothing is installed on first launch.
+- **Verified runtime** — versioned Ubuntu 24.04 rootfs with checksum validation.
+- **Android-native supervision** — Termux-patched PRoot managed by a foreground service.
+- **Local-only access** — authenticated loopback gateway for HTTP, SSE, and WebSocket traffic.
+- **Restricted WebView** — navigation is limited to the local DSH origin.
+- **Private storage** — runtime and workspace data stay in the app-private directory.
 
 ## Requirements
 

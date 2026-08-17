@@ -1,20 +1,30 @@
-# DSH Mobile
+<p align="center">
+  <img src="assets/readme-hero.webp" alt="正在使用手机的 DSH Mobile 鲸鱼形象" width="100%" />
+</p>
 
-[![Android](https://github.com/meteor149/dsh-mobile/actions/workflows/android.yml/badge.svg)](https://github.com/meteor149/dsh-mobile/actions/workflows/android.yml)
-[![许可证](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](../LICENSE)
+<h1 align="center">DSH Mobile</h1>
 
-[English](../README.md) | 简体中文
+<p align="center"><strong>在 Android 上本地运行 DeepSeek Harness。</strong></p>
+
+<p align="center">
+  <a href="https://github.com/meteor149/dsh-mobile/actions/workflows/android.yml"><img src="https://github.com/meteor149/dsh-mobile/actions/workflows/android.yml/badge.svg" alt="Android 构建状态" /></a>
+  <img src="https://img.shields.io/badge/Android-9%2B-3DDC84?logo=android&amp;logoColor=white" alt="Android 9 或更高版本" />
+  <img src="https://img.shields.io/badge/ABI-arm64--v8a-4C6EF5" alt="arm64-v8a" />
+  <a href="../LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="Apache License 2.0" /></a>
+</p>
+
+<p align="center"><a href="../README.md">English</a> · <strong>简体中文</strong></p>
 
 DSH Mobile 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的非官方 Android 宿主应用。它在应用私有的 Ubuntu ARM64 环境中运行官方 DSH Web UI，并通过受限的本地 WebView 打开界面。
 
 ## 主要特性
 
-- 安装、启动和打开均由用户明确操作，首次启动应用时不会自动安装任何内容；
-- 提供带校验和验证的版本化 Ubuntu 24.04 根文件系统；
-- 使用经过 Termux 补丁处理的 PRoot，并由 Android 前台服务管理；
-- 为 HTTP、SSE 和 WebSocket 流量提供经过身份验证的环回网关；
-- WebView 仅允许导航至本地 DSH 来源；
-- 运行时和工作区数据均存储在应用私有目录中。
+- **明确的运行周期** — 安装、启动和打开均由用户主动操作，首次启动时不会自动安装任何内容。
+- **经过验证的运行时** — 版本化 Ubuntu 24.04 根文件系统，并进行校验和验证。
+- **Android 原生管理** — Termux 补丁版 PRoot 由 Android 前台服务管理。
+- **仅限本地访问** — 为 HTTP、SSE 和 WebSocket 流量提供经过身份验证的环回网关。
+- **受限 WebView** — 仅允许导航至本地 DSH 来源。
+- **私有存储** — 运行时和工作区数据均保存在应用私有目录中。
 
 ## 系统要求
 
