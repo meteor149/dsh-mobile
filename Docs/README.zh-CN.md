@@ -46,6 +46,21 @@ DSH Mobile 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harnes
 
 在 Web UI 中按返回键会将应用切换到后台；本地运行时会继续运行，直到用户通过应用或通知将其停止。
 
+## 选择 PRoot 还是 chroot？
+
+两种方式使用同一套经过校验的 Ubuntu 根文件系统和应用私有持久化数据，但取舍不同：
+
+| | PRoot | chroot |
+|---|---|---|
+| Root 权限 | 不需要 | 需要通过设备的 `su` 管理器授权 |
+| 兼容性 | 推荐默认选项，适用于普通 Android 设备 | 取决于 Root 方案、内核和 SELinux 策略 |
+| 性能 | 在用户态转换系统调用，会产生额外开销 | 直接使用内核，通常更快 |
+| Linux 行为 | 模拟 Root 和部分文件系统行为，少数底层工具可能无法使用 | 提供真实 chroot 和挂载行为，但仍不是完整容器 |
+| 安全影响 | 使用应用 UID 运行；PRoot 本身不是安全边界 | Ubuntu 以真实 Root 运行，遭入侵时对设备的影响显著更大 |
+| 适用场景 | 大多数用户，以及需要最大可移植性的环境 | 可信的已 Root 设备，且确实需要性能或内核兼容行为时 |
+
+没有明确需求时建议优先使用 PRoot。切换方式不会重新安装 Ubuntu；chroot 退出后会把文件所有权恢复为应用 UID，因此 PRoot 可以继续使用相同数据。
+
 ## 构建
 
 Android 宿主应用需要 JDK 21 和 Android SDK 36：
@@ -62,6 +77,10 @@ Android 宿主应用需要 JDK 21 和 Android SDK 36：
 ```
 
 APK 输出至 `app/build/outputs/apk/debug/app-debug.apk`。运行时输入的版本和哈希值固定在 [`runtime/versions.env`](../runtime/versions.env) 中；生成的 `runtime/dist` 制品不会提交到版本库。
+
+## 版本管理
+
+[`gradle.properties`](../gradle.properties) 中的 `APP_VERSION_NAME` 和 `APP_VERSION_CODE` 是 Gradle 与 GitHub Actions 共用的唯一版本来源。版本名称遵循语义化版本的预发布格式：面向 `0.0.2` 的 Beta 依次使用 `0.0.2-beta.1`、`0.0.2-beta.2`。每一个对外分发的 APK（包括连续 Beta）都必须递增整数 `APP_VERSION_CODE`；正式版 `0.0.2` 的版本代码也必须大于此前所有 Beta。发布标签使用匹配的 `v<版本号>`，例如 `v0.0.2-beta.1`。
 
 ## 架构
 

@@ -53,6 +53,24 @@ On first launch:
 Pressing Back in the Web UI sends the app to the background; the local runtime
 keeps running until it is stopped from the app or notification.
 
+## PRoot or chroot?
+
+Both modes use the same verified Ubuntu rootfs and persistent app-private data,
+but they make different tradeoffs:
+
+| | PRoot | chroot |
+|---|---|---|
+| Root access | Not required | Required through the device's `su` manager |
+| Compatibility | Recommended default; works on standard Android devices | Depends on the root solution, kernel, and SELinux policy |
+| Performance | System calls are translated in userspace, which adds overhead | Uses the kernel directly and is generally faster |
+| Linux behavior | Emulates root and some filesystem behavior; a few low-level tools may not work | Provides real chroot and mount behavior, but is still not a full container |
+| Security impact | Runs with the app UID; PRoot is not a security boundary | Runs Ubuntu as real root; compromise has substantially greater device impact |
+| Best suited for | Most users and maximum portability | Trusted rooted devices where performance or kernel-compatible behavior matters |
+
+Start with PRoot unless there is a concrete reason to use chroot. Switching
+modes does not reinstall Ubuntu; after chroot exits, file ownership is restored
+to the app UID so the same data can be used by PRoot.
+
 ## Build
 
 The Android host requires JDK 21 and Android SDK 36:
@@ -73,6 +91,17 @@ environment used by the Termux package builder:
 The APK is written to `app/build/outputs/apk/debug/app-debug.apk`. Runtime input
 versions and hashes are pinned in [`runtime/versions.env`](runtime/versions.env);
 generated artifacts under `runtime/dist` are intentionally not committed.
+
+## Versioning
+
+`APP_VERSION_NAME` and `APP_VERSION_CODE` in [`gradle.properties`](gradle.properties)
+are the single source of truth for both Gradle and GitHub Actions. Version names
+follow Semantic Versioning prerelease syntax: Beta builds for the upcoming
+`0.0.2` release are `0.0.2-beta.1`, `0.0.2-beta.2`, and so on. Every distributed
+APK increments the integer `APP_VERSION_CODE`, including consecutive Beta
+builds; the stable `0.0.2` release must also use a code greater than every Beta.
+Release tags use the matching `v<version>` form, for example
+`v0.0.2-beta.1`.
 
 ## Architecture
 

@@ -13,9 +13,6 @@ on:
         type: boolean
         default: false
 
-env:
-  APP_VERSION: 0.0.1-BETA
-
 permissions:
   contents: write
 
@@ -75,6 +72,17 @@ jobs:
         id: release
         shell: bash
         run: |
+          APP_VERSION="$(sed -n 's/^APP_VERSION_NAME=//p' gradle.properties)"
+          VERSION_CODE="$(sed -n 's/^APP_VERSION_CODE=//p' gradle.properties)"
+          [[ "$APP_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+(\.[0-9A-Za-z]+)*)?$ ]] || {
+            echo "APP_VERSION_NAME is not a valid SemVer release name: $APP_VERSION" >&2
+            exit 1
+          }
+          [[ "$VERSION_CODE" =~ ^[1-9][0-9]*$ ]] || {
+            echo "APP_VERSION_CODE must be a positive integer: $VERSION_CODE" >&2
+            exit 1
+          }
+          echo "APP_VERSION=$APP_VERSION" >> "$GITHUB_ENV"
           publish=false
           tag="v$APP_VERSION"
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then

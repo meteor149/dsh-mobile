@@ -16,6 +16,8 @@ val releaseStoreFile = System.getenv("ANDROID_RELEASE_STORE_FILE")
 val releaseStorePassword = System.getenv("ANDROID_RELEASE_STORE_PASSWORD")
 val releaseKeyAlias = System.getenv("ANDROID_RELEASE_KEY_ALIAS")
 val releaseKeyPassword = System.getenv("ANDROID_RELEASE_KEY_PASSWORD")
+val appVersionName = providers.gradleProperty("APP_VERSION_NAME").get()
+val appVersionCode = providers.gradleProperty("APP_VERSION_CODE").get().toInt()
 val releaseSigningValues = listOf(
     releaseStoreFile,
     releaseStorePassword,
@@ -107,8 +109,8 @@ android {
         applicationId = "ai.meteor.dshmobile"
         minSdk = 28
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.0.1-BETA"
+        versionCode = appVersionCode
+        versionName = appVersionName
     }
 
     signingConfigs {
