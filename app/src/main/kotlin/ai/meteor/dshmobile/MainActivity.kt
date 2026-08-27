@@ -55,6 +55,14 @@ class MainActivity : ComponentActivity() {
                         onStart = { launchRuntimeAction(RuntimeService.ACTION_START) },
                         onOpen = { showWebView = true },
                         onStop = { launchRuntimeAction(RuntimeService.ACTION_STOP) },
+                        onModeChange = { mode ->
+                            RuntimeManager.get(this@MainActivity).selectRuntimeMode(mode)
+                        },
+                        onRequestRoot = {
+                            lifecycleScope.launch {
+                                RuntimeManager.get(this@MainActivity).requestRootAccess()
+                            }
+                        },
                     )
                 }
             }

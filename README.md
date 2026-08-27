@@ -24,7 +24,8 @@ in a restricted local WebView.
 
 - **Explicit lifecycle** — install, start, and open only when you choose; nothing is installed on first launch.
 - **Verified runtime** — versioned Ubuntu 24.04 rootfs with checksum validation.
-- **Android-native supervision** — Termux-patched PRoot managed by a foreground service.
+- **Two execution modes** — use rootless PRoot by default, or choose kernel chroot on a rooted device.
+- **Android-native supervision** — PRoot and chroot sessions are managed by a foreground service.
 - **Local-only access** — authenticated loopback gateway for HTTP, SSE, and WebSocket traffic.
 - **Restricted WebView** — navigation is limited to the local DSH origin.
 - **Private storage** — runtime and workspace data stay in the app-private directory.
@@ -33,6 +34,7 @@ in a restricted local WebView.
 
 - an `arm64-v8a` Android device;
 - Android 9 or newer.
+- Root access managed by a compatible `su` implementation is optional and only required for chroot mode.
 
 ## Install
 
@@ -44,8 +46,9 @@ page.
 On first launch:
 
 1. install the runtime;
-2. start DeepSeek Harness;
-3. open the Web UI and finish the model setup there.
+2. choose PRoot, or choose chroot and approve the root-manager authorization prompt;
+3. start DeepSeek Harness;
+4. open the Web UI and finish the model setup there.
 
 Pressing Back in the Web UI sends the app to the background; the local runtime
 keeps running until it is stopped from the app or notification.
@@ -78,16 +81,20 @@ Android / Compose
       │
 foreground service
       │
-PRoot ── Ubuntu ARM64 ── dsh web
+PRoot (app UID) ─┐
+                 ├── Ubuntu ARM64 ── dsh web
+chroot (root) ───┘
       │
 authenticated 127.0.0.1 gateway
       │
 restricted WebView
 ```
 
-PRoot does not grant root privileges and is not a security boundary. DSH runs
-with the Android application UID. See [`runtime/README.md`](runtime/README.md)
-for the runtime layout, artifact contract, and update process.
+PRoot does not grant root privileges and is not a security boundary; in that
+mode DSH runs with the Android application UID. chroot mode explicitly requests
+and verifies UID 0, so only enable it on a device and root manager you trust.
+See [`runtime/README.md`](runtime/README.md) for the runtime layout, artifact
+contract, execution modes, and update process.
 
 ## License
 

@@ -21,7 +21,8 @@ DSH Mobile 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harnes
 
 - **明确的运行周期** — 安装、启动和打开均由用户主动操作，首次启动时不会自动安装任何内容。
 - **经过验证的运行时** — 版本化 Ubuntu 24.04 根文件系统，并进行校验和验证。
-- **Android 原生管理** — Termux 补丁版 PRoot 由 Android 前台服务管理。
+- **两种运行方式** — 默认使用免 Root 的 PRoot，也可在已 Root 设备上选择内核 chroot。
+- **Android 原生管理** — PRoot 与 chroot 会话均由 Android 前台服务管理。
 - **仅限本地访问** — 为 HTTP、SSE 和 WebSocket 流量提供经过身份验证的环回网关。
 - **受限 WebView** — 仅允许导航至本地 DSH 来源。
 - **私有存储** — 运行时和工作区数据均保存在应用私有目录中。
@@ -30,6 +31,7 @@ DSH Mobile 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harnes
 
 - `arm64-v8a` Android 设备；
 - Android 9 或更高版本。
+- 兼容 `su` 的 Root 权限管理为可选项，仅 chroot 方式需要。
 
 ## 安装
 
@@ -38,8 +40,9 @@ DSH Mobile 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harnes
 首次启动时：
 
 1. 安装运行时；
-2. 启动 DeepSeek Harness；
-3. 打开 Web UI，并在其中完成模型设置。
+2. 选择 PRoot；或者选择 chroot，并在 Root 管理器弹窗中授权；
+3. 启动 DeepSeek Harness；
+4. 打开 Web UI，并在其中完成模型设置。
 
 在 Web UI 中按返回键会将应用切换到后台；本地运行时会继续运行，直到用户通过应用或通知将其停止。
 
@@ -67,14 +70,16 @@ Android / Compose
       │
 前台服务
       │
-PRoot ── Ubuntu ARM64 ── dsh web
+PRoot（应用 UID）─┐
+                  ├── Ubuntu ARM64 ── dsh web
+chroot（Root）────┘
       │
 经过身份验证的 127.0.0.1 网关
       │
 受限的 WebView
 ```
 
-PRoot 不会授予 root 权限，也不能作为安全边界。DSH 使用 Android 应用的 UID 运行。有关运行时布局、制品约定和更新流程，请参阅 [`runtime/README.md`](../runtime/README.md)。
+PRoot 不会授予 Root 权限，也不能作为安全边界；该方式下 DSH 使用 Android 应用的 UID 运行。chroot 方式会明确申请并校验 UID 0，请仅在可信的设备与 Root 管理器上启用。有关运行时布局、制品约定、运行方式和更新流程，请参阅 [`runtime/README.md`](../runtime/README.md)。
 
 ## 开源协议
 

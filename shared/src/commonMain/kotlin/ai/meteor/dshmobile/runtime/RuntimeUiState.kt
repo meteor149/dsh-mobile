@@ -11,6 +11,19 @@ enum class RuntimePhase {
     Failed,
 }
 
+enum class RuntimeMode {
+    Proot,
+    Chroot,
+}
+
+enum class RootAccessState {
+    NotRequired,
+    Required,
+    Checking,
+    Granted,
+    Denied,
+}
+
 enum class RuntimeMessageKind {
     ArtifactsUnavailable,
     RuntimeReady,
@@ -39,6 +52,8 @@ data class RuntimeUiState(
     val progress: Float? = null,
     val webUrl: String? = null,
     val logTail: List<String> = emptyList(),
+    val runtimeMode: RuntimeMode = RuntimeMode.Proot,
+    val rootAccess: RootAccessState = RootAccessState.NotRequired,
 ) {
     val isBusy: Boolean
         get() = phase in setOf(

@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +39,8 @@ import androidx.compose.ui.unit.sp
 import ai.meteor.dshmobile.resources.*
 import ai.meteor.dshmobile.runtime.RuntimeMessage
 import ai.meteor.dshmobile.runtime.RuntimeMessageKind
+import ai.meteor.dshmobile.runtime.RootAccessState
+import ai.meteor.dshmobile.runtime.RuntimeMode
 import ai.meteor.dshmobile.runtime.RuntimePhase
 import ai.meteor.dshmobile.runtime.RuntimeUiState
 import org.jetbrains.compose.resources.stringResource
@@ -49,6 +52,8 @@ fun DshMobileApp(
     onStart: () -> Unit,
     onOpen: () -> Unit,
     onStop: () -> Unit,
+    onModeChange: (RuntimeMode) -> Unit,
+    onRequestRoot: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -91,12 +96,20 @@ fun DshMobileApp(
                 )
 
                 Spacer(Modifier.height(28.dp))
-                SetupSteps(state.phase)
+                SetupSteps(state.phase, state.runtimeMode)
                 Spacer(Modifier.height(18.dp))
                 RuntimeCard(state)
                 Spacer(Modifier.height(18.dp))
+                RuntimeModeSelector(
+                    state = state,
+                    onModeChange = onModeChange,
+                    onRequestRoot = onRequestRoot,
+                )
+                Spacer(Modifier.height(18.dp))
                 RuntimeActions(
                     phase = state.phase,
+                    canStart = state.runtimeMode == RuntimeMode.Proot ||
+                        state.rootAccess == RootAccessState.Granted,
                     onInstall = onInstall,
                     onStart = onStart,
                     onOpen = onOpen,
@@ -116,7 +129,7 @@ fun DshMobileApp(
 }
 
 @Composable
-private fun SetupSteps(phase: RuntimePhase) {
+private fun SetupSteps(phase: RuntimePhase, runtimeMode: RuntimeMode) {
     Surface(
         shape = RoundedCornerShape(22.dp),
         color = Canvas.copy(alpha = 0.94f),
@@ -133,7 +146,13 @@ private fun SetupSteps(phase: RuntimePhase) {
             StepRow(
                 number = stringResource(Res.string.step_number_start),
                 title = stringResource(Res.string.step_start_title),
-                detail = stringResource(Res.string.step_start_detail),
+                detail = stringResource(
+                    if (runtimeMode == RuntimeMode.Chroot) {
+                        Res.string.step_start_detail_chroot
+                    } else {
+                        Res.string.step_start_detail_proot
+                    },
+                ),
                 state = startStepState(phase),
             )
             HorizontalDivider(color = Hairline)
@@ -143,6 +162,92 @@ private fun SetupSteps(phase: RuntimePhase) {
                 detail = stringResource(Res.string.step_web_detail),
                 state = webStepState(phase),
             )
+        }
+    }
+}
+
+@Composable
+private fun RuntimeModeSelector(
+    state: RuntimeUiState,
+    onModeChange: (RuntimeMode) -> Unit,
+    onRequestRoot: () -> Unit,
+) {
+    val selectionEnabled = !state.isBusy &&
+        state.phase != RuntimePhase.Running &&
+        state.rootAccess != RootAccessState.Checking
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        color = Canvas.copy(alpha = 0.94f),
+        border = BorderStroke(1.dp, Hairline),
+    ) {
+        Column(Modifier.padding(18.dp)) {
+            Text(
+                text = stringResource(Res.string.runtime_mode_title),
+                color = CaptionInk,
+                fontFamily = FontFamily.Monospace,
+                fontSize = 10.sp,
+                letterSpacing = 1.sp,
+            )
+            Spacer(Modifier.height(10.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                FilterChip(
+                    selected = state.runtimeMode == RuntimeMode.Proot,
+                    onClick = { onModeChange(RuntimeMode.Proot) },
+                    enabled = selectionEnabled,
+                    label = { Text(stringResource(Res.string.runtime_mode_proot)) },
+                )
+                FilterChip(
+                    selected = state.runtimeMode == RuntimeMode.Chroot,
+                    onClick = { onModeChange(RuntimeMode.Chroot) },
+                    enabled = selectionEnabled,
+                    label = { Text(stringResource(Res.string.runtime_mode_chroot)) },
+                )
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = stringResource(
+                    if (state.runtimeMode == RuntimeMode.Chroot) {
+                        Res.string.runtime_mode_chroot_detail
+                    } else {
+                        Res.string.runtime_mode_proot_detail
+                    },
+                ),
+                color = SecondaryInk,
+                fontSize = 12.sp,
+                lineHeight = 18.sp,
+            )
+            if (state.runtimeMode == RuntimeMode.Chroot) {
+                Spacer(Modifier.height(12.dp))
+                HorizontalDivider(color = Hairline)
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = rootAccessLabel(state.rootAccess),
+                    color = if (state.rootAccess == RootAccessState.Granted) Success else Warning,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+                if (state.rootAccess in setOf(RootAccessState.Required, RootAccessState.Denied)) {
+                    Spacer(Modifier.height(10.dp))
+                    OutlinedButton(
+                        onClick = onRequestRoot,
+                        enabled = selectionEnabled,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(22.dp),
+                        border = BorderStroke(1.dp, Hairline),
+                    ) {
+                        Text(
+                            stringResource(
+                                if (state.rootAccess == RootAccessState.Denied) {
+                                    Res.string.action_retry_root
+                                } else {
+                                    Res.string.action_request_root
+                                },
+                            ),
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -289,6 +394,7 @@ private fun PhaseChip(phase: RuntimePhase) {
 @Composable
 private fun RuntimeActions(
     phase: RuntimePhase,
+    canStart: Boolean,
     onInstall: () -> Unit,
     onStart: () -> Unit,
     onOpen: () -> Unit,
@@ -304,10 +410,17 @@ private fun RuntimeActions(
 
         RuntimePhase.Ready -> Button(
             onClick = onStart,
+            enabled = canStart,
             modifier = Modifier.fillMaxWidth().height(52.dp),
             shape = RoundedCornerShape(26.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Ink),
-        ) { Text(stringResource(Res.string.action_start)) }
+        ) {
+            Text(
+                stringResource(
+                    if (canStart) Res.string.action_start else Res.string.action_root_required,
+                ),
+            )
+        }
 
         RuntimePhase.Running -> Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Button(
@@ -375,6 +488,15 @@ private fun RuntimePhase.isBusyPhase(): Boolean = this in setOf(
     RuntimePhase.Starting,
     RuntimePhase.Stopping,
 )
+
+@Composable
+private fun rootAccessLabel(state: RootAccessState): String = when (state) {
+    RootAccessState.NotRequired -> stringResource(Res.string.root_not_required)
+    RootAccessState.Required -> stringResource(Res.string.root_required)
+    RootAccessState.Checking -> stringResource(Res.string.root_checking)
+    RootAccessState.Granted -> stringResource(Res.string.root_granted)
+    RootAccessState.Denied -> stringResource(Res.string.root_denied)
+}
 
 @Composable
 private fun titleFor(phase: RuntimePhase): String = when (phase) {

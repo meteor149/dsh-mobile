@@ -90,3 +90,19 @@ For an Ubuntu, Node, DSH, PRoot, or image recipe update:
 
 The Android installer keeps user data under `files/linux-data` and installs
 replaceable rootfs versions under `files/runtime/versions`.
+
+## Android execution modes
+
+The installed rootfs is shared by both modes. PRoot is the default and runs as
+the application UID. chroot is opt-in: the app asks the device's `su` provider
+for authorization, verifies that `id -u` returns `0`, and verifies it again
+before every start.
+
+The chroot supervisor bind-mounts `/dev`, `/proc`, `/sys`, the persistent home,
+DSH state, and workspaces into the rootfs. It uses a private mount namespace
+when Android provides `unshare`, forwards stop signals through a root-owned PID
+file, and unmounts the bind points on exit. Devices whose root policy or SELinux
+policy does not permit `mount`/`chroot` should continue to use PRoot. After a
+chroot session exits, ownership of the rootfs and persistent data is restored to
+the application UID so the user can switch back to PRoot and runtime upgrades
+can still replace the installed rootfs.

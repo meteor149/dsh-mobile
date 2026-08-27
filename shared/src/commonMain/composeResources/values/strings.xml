@@ -7,7 +7,8 @@
     <string name="step_install_detail">Ubuntu 24.04 · ARM64</string>
     <string name="step_number_install">1</string>
     <string name="step_start_title">Start local service</string>
-    <string name="step_start_detail">PRoot · DSH gateway</string>
+    <string name="step_start_detail_proot">PRoot · DSH gateway</string>
+    <string name="step_start_detail_chroot">chroot (root) · DSH gateway</string>
     <string name="step_number_start">2</string>
     <string name="step_web_title">Open Web UI</string>
     <string name="step_web_detail">Local loopback only</string>
@@ -20,6 +21,16 @@
 
     <string name="runtime_section">RUNTIME</string>
     <string name="runtime_version_unavailable">No artifact provided</string>
+    <string name="runtime_mode_title">UBUNTU EXECUTION MODE</string>
+    <string name="runtime_mode_proot">PRoot</string>
+    <string name="runtime_mode_chroot">chroot</string>
+    <string name="runtime_mode_proot_detail">Runs without root access using PRoot userspace isolation.</string>
+    <string name="runtime_mode_chroot_detail">Runs Ubuntu with the kernel chroot mechanism. Root access is required and will be verified before every start.</string>
+    <string name="root_not_required">Root access is not required.</string>
+    <string name="root_required">Root access has not been granted. Your root manager will show an authorization prompt.</string>
+    <string name="root_checking">Checking root access…</string>
+    <string name="root_granted">Root access granted. chroot is ready.</string>
+    <string name="root_denied">Root access was denied or no supported su command was found.</string>
 
     <string name="action_install">Install runtime</string>
     <string name="action_start">Start DeepSeek Harness</string>
@@ -27,6 +38,9 @@
     <string name="action_stop">Stop runtime</string>
     <string name="action_processing">Processing…</string>
     <string name="action_waiting">Waiting for runtime artifacts</string>
+    <string name="action_request_root">Grant root access</string>
+    <string name="action_retry_root">Retry root authorization</string>
+    <string name="action_root_required">Grant root access before starting</string>
 
     <string name="title_unavailable">Runtime is not packaged</string>
     <string name="title_not_installed">Install when you are ready</string>
