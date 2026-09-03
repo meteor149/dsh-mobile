@@ -34,6 +34,7 @@ RUN apt-get update \
         bash ca-certificates curl git libstdc++6 openssh-client python3 ripgrep \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 COPY gateway.mjs /opt/dsh-mobile/gateway.mjs
+COPY mobile-ui.css mobile-ui.js /opt/dsh-mobile/
 COPY dsh /usr/local/bin/dsh
 COPY dsh-mobile-gateway /usr/local/bin/dsh-mobile-gateway
 RUN chmod 0755 /usr/local/bin/dsh /usr/local/bin/dsh-mobile-gateway \

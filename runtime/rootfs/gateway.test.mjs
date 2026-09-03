@@ -12,8 +12,18 @@ const mockCli = path.join(temporary, 'mock-dsh.mjs')
 await writeFile(mockCli, `
   import http from 'node:http'
   const server = http.createServer((request, response) => {
+    if (request.url === '/') {
+      const body = '<!doctype html><html><head><meta name="viewport" content="width=1024"></head><body><div id="root"></div></body></html>'
+      response.writeHead(200, {
+        'content-type': 'text/html; charset=utf-8',
+        'content-length': Buffer.byteLength(body),
+        etag: 'mock-shell',
+      })
+      response.end(body)
+      return
+    }
     response.writeHead(200, { 'content-type': 'application/json' })
-    response.end(JSON.stringify({ path: request.url, cookie: request.headers.cookie ?? null }))
+    response.end(JSON.stringify({ path: request.url, cookie: request.headers.cookie ?? null, args: process.argv.slice(2) }))
   })
   server.on('upgrade', (_request, socket) => {
     socket.write('HTTP/1.1 101 Switching Protocols\\r\\nUpgrade: websocket\\r\\nConnection: Upgrade\\r\\n\\r\\n')
@@ -66,9 +76,46 @@ test('requires a launch token and exchanges it for an HttpOnly cookie', async ()
   assert.match(cookie, /HttpOnly/u)
   assert.match(cookie, /SameSite=Strict/u)
 
+  const shell = await fetch(`${base}/`, { headers: { cookie } })
+  assert.equal(shell.status, 200)
+  assert.equal(shell.headers.get('etag'), null)
+  const html = await shell.text()
+  assert.equal((html.match(/name="viewport"/gu) ?? []).length, 1)
+  assert.match(html, /data-dsh-mobile-ui="webview"/u)
+  assert.match(html, /\/__dsh_mobile\/ui\.css/u)
+  assert.match(html, /\/__dsh_mobile\/ui\.js/u)
+
+  const style = await fetch(`${base}/__dsh_mobile/ui.css`, { headers: { cookie } })
+  assert.equal(style.status, 200)
+  assert.match(style.headers.get('content-type'), /^text\/css/u)
+  const styleText = await style.text()
+  assert.match(styleText, /data-dsh-mobile-frame/u)
+  assert.match(styleText, /data-dsh-mobile-settings/u)
+  assert.match(styleText, /right: max\(10px, env\(safe-area-inset-right\)\)/u)
+  assert.match(styleText, /margin: -2px 0 -2px auto/u)
+
+  const script = await fetch(`${base}/__dsh_mobile/ui.js`, { headers: { cookie } })
+  assert.equal(script.status, 200)
+  assert.match(script.headers.get('content-type'), /^text\/javascript/u)
+  const scriptText = await script.text()
+  assert.match(scriptText, /data-dsh-mobile-role/u)
+  assert.match(scriptText, /stampSettingsPage/u)
+  assert.match(scriptText, /titleRow\.append\(menu\)/u)
+  assert.match(scriptText, /button\[aria-label\]:not\(\[data-dsh-mobile-ui-menu\]\)/u)
+
   const proxied = await fetch(`${base}/api/probe`, { headers: { cookie } })
   assert.equal(proxied.status, 200)
-  assert.deepEqual(await proxied.json(), { path: '/api/probe', cookie: null })
+  assert.deepEqual(await proxied.json(), {
+    path: '/api/probe',
+    cookie: null,
+    args: [
+      'web',
+      '--host',
+      '127.0.0.1',
+      '--port',
+      '0',
+    ],
+  })
 })
 
 test('authenticates and tunnels a WebSocket upgrade', async () => {

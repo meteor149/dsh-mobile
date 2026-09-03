@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process'
 import { timingSafeEqual } from 'node:crypto'
+import { readFileSync } from 'node:fs'
 import http from 'node:http'
 import net from 'node:net'
 import { createInterface } from 'node:readline'
@@ -10,6 +11,8 @@ const token = process.env.DSH_MOBILE_TOKEN
 const configuredNodeBinary = process.env.DSH_NODE_BIN
 const dshCliPath = process.env.DSH_CLI_PATH ?? '/opt/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js'
 const externalBackendPort = parsePort(process.env.DSH_MOBILE_BACKEND_PORT)
+const mobileStyle = readFileSync(new URL('./mobile-ui.css', import.meta.url))
+const mobileScript = readFileSync(new URL('./mobile-ui.js', import.meta.url))
 
 if (typeof token !== 'string' || token.length < 32) {
   throw new Error('DSH_MOBILE_TOKEN must contain at least 32 characters')
@@ -67,6 +70,7 @@ if (backend !== undefined) {
 
 const gateway = http.createServer(async (request, response) => {
   if (!authenticate(request, response)) return
+  if (serveMobileAsset(request, response)) return
   const port = await backendReady
   const headers = backendHeaders(request.headers, port)
   const proxy = http.request(
@@ -78,6 +82,10 @@ const gateway = http.createServer(async (request, response) => {
       headers,
     },
     backendResponse => {
+      if (shouldInjectMobileUi(request, backendResponse)) {
+        bufferMobileHtml(backendResponse, response)
+        return
+      }
       response.writeHead(backendResponse.statusCode ?? 502, backendResponse.statusMessage, backendResponse.headers)
       backendResponse.pipe(response)
     },
@@ -147,10 +155,74 @@ function safeEquals(left, right) {
 }
 
 function backendHeaders(headers, port) {
-  const rewritten = { ...headers, host: `${LOOPBACK}:${port}` }
+  const rewritten = { ...headers, host: `${LOOPBACK}:${port}`, 'accept-encoding': 'identity' }
   delete rewritten.cookie
   if (rewritten.origin !== undefined) rewritten.origin = `http://${LOOPBACK}:${port}`
   return rewritten
+}
+
+function serveMobileAsset(request, response) {
+  const path = new URL(request.url ?? '/', 'http://localhost').pathname
+  const asset = path === '/__dsh_mobile/ui.css'
+    ? { body: mobileStyle, type: 'text/css; charset=utf-8' }
+    : path === '/__dsh_mobile/ui.js'
+      ? { body: mobileScript, type: 'text/javascript; charset=utf-8' }
+      : undefined
+  if (asset === undefined) return false
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    response.writeHead(405, { allow: 'GET, HEAD' })
+    response.end()
+    return true
+  }
+  response.writeHead(200, {
+    'content-type': asset.type,
+    'content-length': asset.body.length,
+    'cache-control': 'no-cache',
+    'x-content-type-options': 'nosniff',
+  })
+  response.end(request.method === 'HEAD' ? undefined : asset.body)
+  return true
+}
+
+function shouldInjectMobileUi(request, backendResponse) {
+  const type = backendResponse.headers['content-type'] ?? ''
+  return request.method === 'GET' &&
+    (backendResponse.statusCode ?? 500) >= 200 &&
+    (backendResponse.statusCode ?? 500) < 300 &&
+    type.toLowerCase().includes('text/html')
+}
+
+function bufferMobileHtml(backendResponse, response) {
+  const chunks = []
+  backendResponse.on('data', chunk => chunks.push(Buffer.from(chunk)))
+  backendResponse.once('error', error => {
+    if (!response.headersSent) response.writeHead(502, { 'content-type': 'text/plain; charset=utf-8' })
+    response.end(`Local DSH HTML injection failed: ${error.message}`)
+  })
+  backendResponse.once('end', () => {
+    if (response.writableEnded) return
+    const body = Buffer.from(injectMobileUi(Buffer.concat(chunks).toString('utf8')))
+    const headers = { ...backendResponse.headers, 'content-length': String(body.length) }
+    delete headers['content-encoding']
+    delete headers['transfer-encoding']
+    delete headers.etag
+    response.writeHead(backendResponse.statusCode ?? 200, backendResponse.statusMessage, headers)
+    response.end(body)
+  })
+}
+
+function injectMobileUi(html) {
+  if (html.includes('data-dsh-mobile-ui="webview"')) return html
+  const cleaned = html.replace(/<meta\b[^>]*\bname=["']viewport["'][^>]*>/giu, '')
+  const markup = [
+    '<meta data-dsh-mobile-ui="webview" name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />',
+    '<link rel="stylesheet" href="/__dsh_mobile/ui.css" />',
+    '<script defer src="/__dsh_mobile/ui.js"></script>',
+  ].join('\n    ')
+  const head = /<head\b[^>]*>/iu
+  return head.test(cleaned)
+    ? cleaned.replace(head, match => `${match}\n    ${markup}`)
+    : `${markup}\n${cleaned}`
 }
 
 function parsePort(value) {

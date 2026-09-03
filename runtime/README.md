@@ -38,6 +38,10 @@ The Ubuntu image contains fixed versions of:
 - Node.js from the pinned official ARM64 distribution archive;
 - the official `@deepseek-ai/dsh` npm release installed with `npm ci` from a
   committed lockfile;
+- a local WebView enhancement layer, which turns the narrow-screen shell into
+  a touch-first single-column layout with off-canvas panels and a keyboard-safe
+  composer, and reshapes settings into a full-width sheet with horizontally
+  scrollable categories and stacked controls without replacing the upstream DSH UI;
 - Linux ARM64 builds of native Node dependencies such as `node-pty`;
 - Git, OpenSSH client, Python 3, ripgrep, curl, and CA certificates;
 - `dsh-mobile-gateway`, the authenticated loopback reverse proxy.

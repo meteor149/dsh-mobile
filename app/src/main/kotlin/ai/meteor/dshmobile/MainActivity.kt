@@ -14,6 +14,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.ui.Modifier
@@ -106,7 +107,8 @@ private fun RuntimeWebView(
         factory = { webView },
         modifier = Modifier
             .fillMaxSize()
-            .windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.safeDrawing),
+            .windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.safeDrawing)
+            .imePadding(),
     )
 }
 
@@ -116,6 +118,12 @@ private fun createLockedDownWebView(context: Context, expected: Uri): WebView = 
     settings.domStorageEnabled = true
     settings.allowFileAccess = false
     settings.allowContentAccess = false
+    settings.setSupportZoom(false)
+    settings.builtInZoomControls = false
+    settings.displayZoomControls = false
+    settings.loadWithOverviewMode = false
+    settings.useWideViewPort = true
+    settings.textZoom = 100
     settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
     settings.cacheMode = WebSettings.LOAD_DEFAULT
     CookieManager.getInstance().setAcceptCookie(true)

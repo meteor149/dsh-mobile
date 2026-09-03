@@ -28,6 +28,9 @@ in a restricted local WebView.
 - **Android-native supervision** — PRoot and chroot sessions are managed by a foreground service.
 - **Local-only access** — authenticated loopback gateway for HTTP, SSE, and WebSocket traffic.
 - **Restricted WebView** — navigation is limited to the local DSH origin.
+- **Phone-first Web UI** — the conversation uses the visible viewport, with
+  drawer navigation, horizontally scrollable settings categories, stacked
+  touch-sized settings controls, and a keyboard-safe composer.
 - **Private storage** — runtime and workspace data stay in the app-private directory.
 
 ## Requirements

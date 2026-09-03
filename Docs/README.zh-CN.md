@@ -25,6 +25,7 @@ DSH Mobile 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harnes
 - **Android 原生管理** — PRoot 与 chroot 会话均由 Android 前台服务管理。
 - **仅限本地访问** — 为 HTTP、SSE 和 WebSocket 流量提供经过身份验证的环回网关。
 - **受限 WebView** — 仅允许导航至本地 DSH 来源。
+- **手机优先的 Web UI** — 会话跟随可视视口显示，并提供抽屉导航、横滑设置分类、适合触控的单列设置项和不被软键盘遮挡的输入区。
 - **私有存储** — 运行时和工作区数据均保存在应用私有目录中。
 
 ## 系统要求
