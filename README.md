@@ -100,12 +100,10 @@ generated artifacts under `runtime/dist` are intentionally not committed.
 
 `APP_VERSION_NAME` and `APP_VERSION_CODE` in [`gradle.properties`](gradle.properties)
 are the single source of truth for both Gradle and GitHub Actions. Version names
-follow Semantic Versioning prerelease syntax: Beta builds for the upcoming
-`0.0.2` release are `0.0.2-beta.1`, `0.0.2-beta.2`, and so on. Every distributed
-APK increments the integer `APP_VERSION_CODE`, including consecutive Beta
-builds; the stable `0.0.2` release must also use a code greater than every Beta.
-Release tags use the matching `v<version>` form, for example
-`v0.0.2-beta.1`.
+follow Semantic Versioning; prereleases use suffixes such as `-beta.1`. Every
+distributed APK increments the integer `APP_VERSION_CODE`, including consecutive
+prereleases. Release tags use the matching `v<version>` form, for example
+`v0.0.1` or `v0.0.2-beta.1`.
 
 ## Architecture
 

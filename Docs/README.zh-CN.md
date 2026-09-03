@@ -81,7 +81,7 @@ APK 输出至 `app/build/outputs/apk/debug/app-debug.apk`。运行时输入的�
 
 ## 版本管理
 
-[`gradle.properties`](../gradle.properties) 中的 `APP_VERSION_NAME` 和 `APP_VERSION_CODE` 是 Gradle 与 GitHub Actions 共用的唯一版本来源。版本名称遵循语义化版本的预发布格式：面向 `0.0.2` 的 Beta 依次使用 `0.0.2-beta.1`、`0.0.2-beta.2`。每一个对外分发的 APK（包括连续 Beta）都必须递增整数 `APP_VERSION_CODE`；正式版 `0.0.2` 的版本代码也必须大于此前所有 Beta。发布标签使用匹配的 `v<版本号>`，例如 `v0.0.2-beta.1`。
+[`gradle.properties`](../gradle.properties) 中的 `APP_VERSION_NAME` 和 `APP_VERSION_CODE` 是 Gradle 与 GitHub Actions 共用的唯一版本来源。版本名称遵循语义化版本；预发布版本使用 `-beta.1` 等后缀。每一个对外分发的 APK（包括连续预发布版本）都必须递增整数 `APP_VERSION_CODE`。发布标签使用匹配的 `v<版本号>`，例如 `v0.0.1` 或 `v0.0.2-beta.1`。
 
 ## 架构
 

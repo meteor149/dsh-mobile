@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       publish_release:
-        description: Publish the APK to the versioned GitHub prerelease
+        description: Publish the APK to the versioned GitHub release
         required: true
         type: boolean
         default: false
@@ -84,7 +84,11 @@ jobs:
           }
           echo "APP_VERSION=$APP_VERSION" >> "$GITHUB_ENV"
           publish=false
+          prerelease=false
           tag="v$APP_VERSION"
+          if [[ "$APP_VERSION" == *-* ]]; then
+            prerelease=true
+          fi
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             publish=true
             tag="$GITHUB_REF_NAME"
@@ -96,6 +100,7 @@ jobs:
             publish=true
           fi
           echo "publish=$publish" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
       - name: Prepare release signing
@@ -159,5 +164,5 @@ jobs:
           name: DSH Mobile ${{ env.APP_VERSION }}
           files: ${{ steps.package.outputs.apk_name }}
           fail_on_unmatched_files: true
-          prerelease: true
+          prerelease: ${{ steps.release.outputs.prerelease }}
           generate_release_notes: true
