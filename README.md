@@ -24,8 +24,8 @@ in a restricted local WebView.
 
 - **Explicit lifecycle** — install, start, and open only when you choose; nothing is installed on first launch.
 - **Verified runtime** — versioned Ubuntu 24.04 rootfs with checksum validation.
-- **Two execution modes** — use rootless PRoot by default, or choose kernel chroot on a rooted device.
-- **Android-native supervision** — PRoot and chroot sessions are managed by a foreground service.
+- **Three execution modes** — use PRoot by default, try the lower-overhead rootless proroot backend, or choose kernel chroot on a rooted device.
+- **Android-native supervision** — PRoot, proroot, and chroot sessions are managed by a foreground service.
 - **Local-only access** — authenticated loopback gateway for HTTP, SSE, and WebSocket traffic.
 - **Restricted WebView** — navigation is limited to the local DSH origin.
 - **Phone-first Web UI** — the conversation uses the visible viewport, with
@@ -49,30 +49,31 @@ page.
 On first launch:
 
 1. install the runtime;
-2. choose PRoot, or choose chroot and approve the root-manager authorization prompt;
+2. choose PRoot, proroot, or chroot (which requires approving the root-manager authorization prompt);
 3. start DeepSeek Harness;
 4. open the Web UI and finish the model setup there.
 
 Pressing Back in the Web UI sends the app to the background; the local runtime
 keeps running until it is stopped from the app or notification.
 
-## PRoot or chroot?
+## PRoot, proroot, or chroot?
 
-Both modes use the same verified Ubuntu rootfs and persistent app-private data,
-but they make different tradeoffs:
+All three modes use the same verified Ubuntu rootfs and persistent app-private
+data, but they make different tradeoffs:
 
-| | PRoot | chroot |
-|---|---|---|
-| Root access | Not required | Required through the device's `su` manager |
-| Compatibility | Recommended default; works on standard Android devices | Depends on the root solution, kernel, and SELinux policy |
-| Performance | System calls are translated in userspace, which adds overhead | Uses the kernel directly and is generally faster |
-| Linux behavior | Emulates root and some filesystem behavior; a few low-level tools may not work | Provides real chroot and mount behavior, but is still not a full container |
-| Security impact | Runs with the app UID; PRoot is not a security boundary | Runs Ubuntu as real root; compromise has substantially greater device impact |
-| Best suited for | Most users and maximum portability | Trusted rooted devices where performance or kernel-compatible behavior matters |
+| | PRoot | proroot | chroot |
+|---|---|---|---|
+| Root access | Not required | Not required | Required through the device's `su` manager |
+| Compatibility | Recommended default; mature behavior on standard Android devices | Experimental; validated by upstream on recent ARM64 Android devices | Depends on the root solution, kernel, and SELinux policy |
+| Performance | Uses ptrace-based userspace syscall translation | Uses an LD_PRELOAD-based runtime and avoids ptrace overhead | Uses the kernel directly and is generally fastest |
+| Linux behavior | Emulates root and some filesystem behavior | Emulates root and filesystem behavior; edge cases may differ from PRoot | Provides real chroot and mount behavior, but is still not a full container |
+| Security impact | Runs with the app UID; not a security boundary | Runs with the app UID; not a security boundary | Runs Ubuntu as real root; compromise has substantially greater device impact |
+| Best suited for | Most users and maximum portability | Rootless users testing lower runtime overhead | Trusted rooted devices where kernel-compatible behavior matters |
 
-Start with PRoot unless there is a concrete reason to use chroot. Switching
-modes does not reinstall Ubuntu; after chroot exits, file ownership is restored
-to the app UID so the same data can be used by PRoot.
+Start with PRoot. proroot is a separately selectable experimental backend based
+on the binary release from [coderredlab/proroot](https://github.com/coderredlab/proroot).
+Switching modes does not reinstall Ubuntu; after chroot exits, file ownership is
+restored to the app UID so the same data can be used by either rootless mode.
 
 ## Build
 
@@ -114,20 +115,23 @@ Android / Compose
 foreground service
       │
 PRoot (app UID) ─┐
-                 ├── Ubuntu ARM64 ── dsh web
-chroot (root) ───┘
+proroot (app UID) ├── Ubuntu ARM64 ── dsh web
+chroot (root) ────┘
       │
 authenticated 127.0.0.1 gateway
       │
 restricted WebView
 ```
 
-PRoot does not grant root privileges and is not a security boundary; in that
-mode DSH runs with the Android application UID. chroot mode explicitly requests
-and verifies UID 0, so only enable it on a device and root manager you trust.
+PRoot and proroot do not grant root privileges and are not security boundaries;
+in those modes DSH runs with the Android application UID. chroot mode explicitly
+requests and verifies UID 0, so only enable it on a device and root manager you trust.
 See [`runtime/README.md`](runtime/README.md) for the runtime layout, artifact
 contract, execution modes, and update process.
 
 ## License
 
-Licensed under the [Apache License 2.0](LICENSE).
+DSH Mobile source code is licensed under the [Apache License 2.0](LICENSE).
+The unmodified proroot binaries packaged by complete runtime builds have a
+[separate upstream license](app/src/main/assets/licenses/proroot-LICENSE.txt)
+and are attributed to [proroot](https://github.com/coderredlab/proroot).

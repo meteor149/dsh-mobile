@@ -62,7 +62,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: runtime/dist
-          key: runtime-${{ runner.os }}-${{ hashFiles('runtime/versions.env', 'runtime/rootfs/**', 'runtime/proot/**', 'tools/generate-runtime-manifest.mjs') }}
+          key: runtime-${{ runner.os }}-${{ hashFiles('runtime/versions.env', 'runtime/rootfs/**', 'runtime/proot/**', 'runtime/proroot/**', 'tools/generate-runtime-manifest.mjs') }}
 
       - name: Build runtime
         if: steps.runtime-cache.outputs.cache-hit != 'true'

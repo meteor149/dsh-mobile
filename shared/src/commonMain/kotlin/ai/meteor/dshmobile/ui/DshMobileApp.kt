@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -90,7 +91,7 @@ fun DshMobileApp(
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = detailFor(state.detail),
+                    text = detailFor(state.detail, state.runtimeMode),
                     color = SecondaryInk,
                     style = MaterialTheme.typography.bodyLarge,
                 )
@@ -108,7 +109,7 @@ fun DshMobileApp(
                 Spacer(Modifier.height(18.dp))
                 RuntimeActions(
                     phase = state.phase,
-                    canStart = state.runtimeMode == RuntimeMode.Proot ||
+                    canStart = state.runtimeMode != RuntimeMode.Chroot ||
                         state.rootAccess == RootAccessState.Granted,
                     onInstall = onInstall,
                     onStart = onStart,
@@ -147,10 +148,10 @@ private fun SetupSteps(phase: RuntimePhase, runtimeMode: RuntimeMode) {
                 number = stringResource(Res.string.step_number_start),
                 title = stringResource(Res.string.step_start_title),
                 detail = stringResource(
-                    if (runtimeMode == RuntimeMode.Chroot) {
-                        Res.string.step_start_detail_chroot
-                    } else {
-                        Res.string.step_start_detail_proot
+                    when (runtimeMode) {
+                        RuntimeMode.Proot -> Res.string.step_start_detail_proot
+                        RuntimeMode.Proroot -> Res.string.step_start_detail_proroot
+                        RuntimeMode.Chroot -> Res.string.step_start_detail_chroot
                     },
                 ),
                 state = startStepState(phase),
@@ -190,12 +191,21 @@ private fun RuntimeModeSelector(
                 letterSpacing = 1.sp,
             )
             Spacer(Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
                 FilterChip(
                     selected = state.runtimeMode == RuntimeMode.Proot,
                     onClick = { onModeChange(RuntimeMode.Proot) },
                     enabled = selectionEnabled,
                     label = { Text(stringResource(Res.string.runtime_mode_proot)) },
+                )
+                FilterChip(
+                    selected = state.runtimeMode == RuntimeMode.Proroot,
+                    onClick = { onModeChange(RuntimeMode.Proroot) },
+                    enabled = selectionEnabled,
+                    label = { Text(stringResource(Res.string.runtime_mode_proroot)) },
                 )
                 FilterChip(
                     selected = state.runtimeMode == RuntimeMode.Chroot,
@@ -207,10 +217,10 @@ private fun RuntimeModeSelector(
             Spacer(Modifier.height(6.dp))
             Text(
                 text = stringResource(
-                    if (state.runtimeMode == RuntimeMode.Chroot) {
-                        Res.string.runtime_mode_chroot_detail
-                    } else {
-                        Res.string.runtime_mode_proot_detail
+                    when (state.runtimeMode) {
+                        RuntimeMode.Proot -> Res.string.runtime_mode_proot_detail
+                        RuntimeMode.Proroot -> Res.string.runtime_mode_proroot_detail
+                        RuntimeMode.Chroot -> Res.string.runtime_mode_chroot_detail
                     },
                 ),
                 color = SecondaryInk,
@@ -523,7 +533,7 @@ private fun phaseLabel(phase: RuntimePhase): String = when (phase) {
 }
 
 @Composable
-private fun detailFor(message: RuntimeMessage): String = when (message.kind) {
+private fun detailFor(message: RuntimeMessage, runtimeMode: RuntimeMode): String = when (message.kind) {
     RuntimeMessageKind.ArtifactsUnavailable -> stringResource(Res.string.detail_artifacts_unavailable)
     RuntimeMessageKind.RuntimeReady -> stringResource(Res.string.detail_runtime_ready)
     RuntimeMessageKind.RuntimeNotInstalled -> stringResource(Res.string.detail_runtime_not_installed)
@@ -535,7 +545,13 @@ private fun detailFor(message: RuntimeMessage): String = when (message.kind) {
         requireNotNull(message.count),
     )
     RuntimeMessageKind.InstallComplete -> stringResource(Res.string.detail_install_complete)
-    RuntimeMessageKind.Starting -> stringResource(Res.string.detail_starting)
+    RuntimeMessageKind.Starting -> stringResource(
+        when (runtimeMode) {
+            RuntimeMode.Proot -> Res.string.detail_starting
+            RuntimeMode.Proroot -> Res.string.detail_starting_proroot
+            RuntimeMode.Chroot -> Res.string.detail_starting_chroot
+        },
+    )
     RuntimeMessageKind.Running -> stringResource(Res.string.detail_running)
     RuntimeMessageKind.Stopping -> stringResource(Res.string.detail_stopping)
     RuntimeMessageKind.Stopped -> stringResource(Res.string.detail_stopped)

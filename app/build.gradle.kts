@@ -151,6 +151,11 @@ android {
                 "**/libdsh_proot_loader.so",
                 "**/libandroid-shmem.so",
                 "**/libdsh_talloc.so",
+                "**/libproroot.so",
+                "**/libproroot-runtime.so",
+                "**/libproroot-bridge.so",
+                "**/libproroot-linker.so",
+                "**/libproroot-stub-loader.so",
             )
         }
     }

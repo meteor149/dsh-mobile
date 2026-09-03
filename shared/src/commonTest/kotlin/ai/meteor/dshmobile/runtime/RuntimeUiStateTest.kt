@@ -21,4 +21,12 @@ class RuntimeUiStateTest {
         assertEquals(RuntimeMode.Proot, state.runtimeMode)
         assertEquals(RootAccessState.NotRequired, state.rootAccess)
     }
+
+    @Test
+    fun prorootIsAvailableAsASeparateRootlessMode() {
+        val state = RuntimeUiState(runtimeMode = RuntimeMode.Proroot)
+
+        assertEquals(RuntimeMode.Proroot, state.runtimeMode)
+        assertEquals(RootAccessState.NotRequired, state.rootAccess)
+    }
 }

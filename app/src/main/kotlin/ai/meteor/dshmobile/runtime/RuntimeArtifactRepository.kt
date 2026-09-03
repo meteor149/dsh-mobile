@@ -33,6 +33,6 @@ class RuntimeArtifactRepository(
 
     private companion object {
         const val MANIFEST_ASSET = "runtime/runtime-manifest.json"
-        const val SUPPORTED_SCHEMA_VERSION = 1
+        const val SUPPORTED_SCHEMA_VERSION = 2
     }
 }

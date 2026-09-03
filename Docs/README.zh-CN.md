@@ -21,8 +21,8 @@ DSH Mobile 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harnes
 
 - **明确的运行周期** — 安装、启动和打开均由用户主动操作，首次启动时不会自动安装任何内容。
 - **经过验证的运行时** — 版本化 Ubuntu 24.04 根文件系统，并进行校验和验证。
-- **两种运行方式** — 默认使用免 Root 的 PRoot，也可在已 Root 设备上选择内核 chroot。
-- **Android 原生管理** — PRoot 与 chroot 会话均由 Android 前台服务管理。
+- **三种运行方式** — 默认使用免 Root 的 PRoot，也可尝试低开销的免 Root proroot，或在已 Root 设备上选择内核 chroot。
+- **Android 原生管理** — PRoot、proroot 与 chroot 会话均由 Android 前台服务管理。
 - **仅限本地访问** — 为 HTTP、SSE 和 WebSocket 流量提供经过身份验证的环回网关。
 - **受限 WebView** — 仅允许导航至本地 DSH 来源。
 - **手机优先的 Web UI** — 会话跟随可视视口显示，并提供抽屉导航、横滑设置分类、适合触控的单列设置项和不被软键盘遮挡的输入区。
@@ -41,26 +41,26 @@ DSH Mobile 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harnes
 首次启动时：
 
 1. 安装运行时；
-2. 选择 PRoot；或者选择 chroot，并在 Root 管理器弹窗中授权；
+2. 选择 PRoot、proroot；或者选择 chroot，并在 Root 管理器弹窗中授权；
 3. 启动 DeepSeek Harness；
 4. 打开 Web UI，并在其中完成模型设置。
 
 在 Web UI 中按返回键会将应用切换到后台；本地运行时会继续运行，直到用户通过应用或通知将其停止。
 
-## 选择 PRoot 还是 chroot？
+## 选择 PRoot、proroot 还是 chroot？
 
-两种方式使用同一套经过校验的 Ubuntu 根文件系统和应用私有持久化数据，但取舍不同：
+三种方式使用同一套经过校验的 Ubuntu 根文件系统和应用私有持久化数据，但取舍不同：
 
-| | PRoot | chroot |
-|---|---|---|
-| Root 权限 | 不需要 | 需要通过设备的 `su` 管理器授权 |
-| 兼容性 | 推荐默认选项，适用于普通 Android 设备 | 取决于 Root 方案、内核和 SELinux 策略 |
-| 性能 | 在用户态转换系统调用，会产生额外开销 | 直接使用内核，通常更快 |
-| Linux 行为 | 模拟 Root 和部分文件系统行为，少数底层工具可能无法使用 | 提供真实 chroot 和挂载行为，但仍不是完整容器 |
-| 安全影响 | 使用应用 UID 运行；PRoot 本身不是安全边界 | Ubuntu 以真实 Root 运行，遭入侵时对设备的影响显著更大 |
-| 适用场景 | 大多数用户，以及需要最大可移植性的环境 | 可信的已 Root 设备，且确实需要性能或内核兼容行为时 |
+| | PRoot | proroot | chroot |
+|---|---|---|---|
+| Root 权限 | 不需要 | 不需要 | 需要通过设备的 `su` 管理器授权 |
+| 兼容性 | 推荐默认选项，在普通 Android 设备上行为较成熟 | 实验性；上游已在较新的 ARM64 Android 设备上验证 | 取决于 Root 方案、内核和 SELinux 策略 |
+| 性能 | 通过 ptrace 在用户态转换系统调用 | 基于 LD_PRELOAD 运行，避开 ptrace 开销 | 直接使用内核，通常最快 |
+| Linux 行为 | 模拟 Root 和部分文件系统行为，少数底层工具可能无法使用 | 模拟 Root 和文件系统行为，边缘场景可能与 PRoot 不同 | 提供真实 chroot 和挂载行为，但仍不是完整容器 |
+| 安全影响 | 使用应用 UID 运行，并非安全边界 | 使用应用 UID 运行，并非安全边界 | Ubuntu 以真实 Root 运行，遭入侵时对设备的影响显著更大 |
+| 适用场景 | 大多数用户，以及需要最大可移植性的环境 | 希望测试更低运行开销的免 Root 用户 | 可信的已 Root 设备，且确实需要内核兼容行为时 |
 
-没有明确需求时建议优先使用 PRoot。切换方式不会重新安装 Ubuntu；chroot 退出后会把文件所有权恢复为应用 UID，因此 PRoot 可以继续使用相同数据。
+建议优先使用 PRoot。proroot 是基于 [coderredlab/proroot](https://github.com/coderredlab/proroot) 二进制发行版的独立实验后端。切换方式不会重新安装 Ubuntu；chroot 退出后会把文件所有权恢复为应用 UID，因此两种免 Root 方式都可以继续使用相同数据。
 
 ## 构建
 
@@ -91,16 +91,16 @@ Android / Compose
 前台服务
       │
 PRoot（应用 UID）─┐
-                  ├── Ubuntu ARM64 ── dsh web
-chroot（Root）────┘
+proroot（应用 UID）├── Ubuntu ARM64 ── dsh web
+chroot（Root）─────┘
       │
 经过身份验证的 127.0.0.1 网关
       │
 受限的 WebView
 ```
 
-PRoot 不会授予 Root 权限，也不能作为安全边界；该方式下 DSH 使用 Android 应用的 UID 运行。chroot 方式会明确申请并校验 UID 0，请仅在可信的设备与 Root 管理器上启用。有关运行时布局、制品约定、运行方式和更新流程，请参阅 [`runtime/README.md`](../runtime/README.md)。
+PRoot 与 proroot 不会授予 Root 权限，也不能作为安全边界；这两种方式下 DSH 使用 Android 应用的 UID 运行。chroot 方式会明确申请并校验 UID 0，请仅在可信的设备与 Root 管理器上启用。有关运行时布局、制品约定、运行方式和更新流程，请参阅 [`runtime/README.md`](../runtime/README.md)。
 
 ## 开源协议
 
-本项目基于 [Apache License 2.0](../LICENSE) 开源。
+DSH Mobile 源代码基于 [Apache License 2.0](../LICENSE) 开源。完整运行时构建所打包的未修改 proroot 二进制使用[独立的上游许可证](../app/src/main/assets/licenses/proroot-LICENSE.txt)，并归属 [proroot](https://github.com/coderredlab/proroot)。

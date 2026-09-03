@@ -13,19 +13,31 @@ const nativeFiles = [
   ['libdsh_proot_loader.so', 'libdsh_proot_loader.so'],
   ['libandroid-shmem.so', 'libandroid-shmem.so'],
   ['libdsh_talloc.so', 'libdsh_talloc.so'],
+  ['libproroot.so', 'libproroot.so', 'PROROOT_LAUNCHER_SHA256'],
+  ['libproroot-runtime.so', 'libproroot-runtime.so', 'PROROOT_RUNTIME_SHA256'],
+  ['libproroot-bridge.so', 'libproroot-bridge.so', 'PROROOT_BRIDGE_SHA256'],
+  ['libproroot-linker.so', 'libproroot-linker.so', 'PROROOT_LINKER_SHA256'],
+  ['libproroot-stub-loader.so', 'libproroot-stub-loader.so', 'PROROOT_STUB_LOADER_SHA256'],
 ]
 
 const rootfsPath = path.join(dist, rootfsFile)
 const rootfsStat = await stat(rootfsPath)
 const nativeLibraries = []
-for (const [file, packagedName] of nativeFiles) {
+for (const [file, packagedName, pinnedShaName] of nativeFiles) {
   const artifactPath = path.join(dist, file)
   await stat(artifactPath)
-  nativeLibraries.push({ file, packagedName, sha256: await sha256(artifactPath) })
+  const actualSha256 = await sha256(artifactPath)
+  if (pinnedShaName) {
+    const expectedSha256 = required(versions, pinnedShaName).toLowerCase()
+    if (actualSha256 !== expectedSha256) {
+      throw new Error(`${file} checksum mismatch: expected=${expectedSha256} actual=${actualSha256}`)
+    }
+  }
+  nativeLibraries.push({ file, packagedName, sha256: actualSha256 })
 }
 
 const manifest = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   available: true,
   runtimeVersion: required(versions, 'RUNTIME_VERSION'),
   abi: 'arm64-v8a',
@@ -39,6 +51,11 @@ const manifest = {
   entrypoint: {
     prootLibrary: 'libdsh_proot.so',
     loaderLibrary: 'libdsh_proot_loader.so',
+    prorootLibrary: 'libproroot.so',
+    prorootRuntimeLibrary: 'libproroot-runtime.so',
+    prorootBridgeLibrary: 'libproroot-bridge.so',
+    prorootLinkerLibrary: 'libproroot-linker.so',
+    prorootStubLoaderLibrary: 'libproroot-stub-loader.so',
     guestCommand: '/usr/local/bin/dsh-mobile-gateway',
   },
   sources: {
@@ -50,6 +67,7 @@ const manifest = {
     termuxProotVersion: required(versions, 'TERMUX_PROOT_VERSION'),
     termuxProotCommit: required(versions, 'TERMUX_PROOT_COMMIT'),
     termuxPackagesCommit: required(versions, 'TERMUX_PACKAGES_COMMIT'),
+    prorootVersion: required(versions, 'PROROOT_VERSION'),
   },
 }
 

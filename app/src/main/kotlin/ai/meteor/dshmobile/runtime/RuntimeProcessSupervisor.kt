@@ -49,6 +49,7 @@ class RuntimeProcessSupervisor(
 
         val child = when (mode) {
             RuntimeMode.Proot -> startProot(runtime, data, token)
+            RuntimeMode.Proroot -> startProroot(runtime, data, token)
             RuntimeMode.Chroot -> startChroot(runtime, data, token)
         }
         process = child
@@ -161,6 +162,41 @@ class RuntimeProcessSupervisor(
         return rootAccess.start(command)
     }
 
+    private fun startProroot(
+        runtime: InstalledRuntime,
+        data: RuntimeDataDirectories,
+        token: String,
+    ): Process {
+        val nativeDirectory = Paths.get(appContext.applicationInfo.nativeLibraryDir)
+        val entrypoint = runtime.manifest.entrypoint
+        val proroot = requireExecutable(nativeDirectory, entrypoint.prorootLibrary)
+        entrypoint.prorootLibraries.drop(1).forEach { name ->
+            requireNativeLibrary(nativeDirectory, name)
+        }
+        return ProcessBuilder(
+            prorootLaunchCommand(
+                proroot = proroot,
+                rootfs = runtime.rootfs,
+                home = data.home,
+                dshHome = data.dshHome,
+                workspaces = data.workspaces,
+                temporary = data.prorootTemporary,
+                token = token,
+                guestCommand = entrypoint.guestCommand,
+            ),
+        )
+            .directory(runtime.runtimeDirectory.toFile())
+            .redirectErrorStream(true)
+            .apply {
+                environment().clear()
+                environment()["HOME"] = data.home.toString()
+                environment()["TMPDIR"] = data.prorootTemporary.toString()
+                environment()["PROROOT_TMP_DIR"] = data.prorootTemporary.toString()
+                environment()["LANG"] = "C.UTF-8"
+            }
+            .start()
+    }
+
     private fun buildProotCommand(
         runtime: InstalledRuntime,
         proot: Path,
@@ -235,8 +271,15 @@ class RuntimeProcessSupervisor(
             dshHome = dataRoot.resolve("dsh-home"),
             workspaces = dataRoot.resolve("workspaces"),
             temporary = appContext.cacheDir.toPath().resolve("proot"),
+            prorootTemporary = appContext.filesDir.toPath().resolve("proroot-tmp"),
         ).also { directories ->
-            listOf(directories.home, directories.dshHome, directories.workspaces, directories.temporary)
+            listOf(
+                directories.home,
+                directories.dshHome,
+                directories.workspaces,
+                directories.temporary,
+                directories.prorootTemporary,
+            )
                 .forEach(Files::createDirectories)
         }
     }
@@ -265,11 +308,60 @@ class RuntimeProcessSupervisor(
         return path
     }
 
+    private fun requireNativeLibrary(directory: Path, name: String): Path {
+        val path = directory.resolve(name)
+        require(Files.isRegularFile(path) && Files.isReadable(path)) {
+            "Required native library is not available in the APK: $name"
+        }
+        return path
+    }
+
     private fun randomToken(): String {
         val bytes = ByteArray(TOKEN_BYTES)
         SecureRandom().nextBytes(bytes)
         return Base64.encodeToString(bytes, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
     }
+}
+
+internal fun prorootLaunchCommand(
+    proroot: Path,
+    rootfs: Path,
+    home: Path,
+    dshHome: Path,
+    workspaces: Path,
+    temporary: Path,
+    token: String,
+    guestCommand: String,
+): List<String> = buildList {
+    add(proroot.toString())
+    add("-r")
+    add(rootfs.toString())
+    add("-0")
+    add("--link2symlink")
+    listOf(
+        home to "/root",
+        dshHome to "/dsh-home",
+        workspaces to "/workspace",
+    ).forEach { (source, target) ->
+        add("-b")
+        add("$source:$target")
+    }
+    add("-w")
+    add("/workspace")
+    add("/usr/bin/env")
+    add("-i")
+    add("PROROOT_TMP_DIR=$temporary")
+    add("HOME=/root")
+    add("USER=root")
+    add("LOGNAME=root")
+    add("SHELL=/bin/bash")
+    add("TERM=xterm-256color")
+    add("LANG=C.UTF-8")
+    add("PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin")
+    add("DSH_HOME=/dsh-home")
+    add("DSH_PERMISSION_MODE=danger-full-access")
+    add("DSH_MOBILE_TOKEN=$token")
+    add(guestCommand)
 }
 
 internal fun chrootLaunchScript(
@@ -381,6 +473,7 @@ private data class RuntimeDataDirectories(
     val dshHome: Path,
     val workspaces: Path,
     val temporary: Path,
+    val prorootTemporary: Path,
 )
 
 private val READY_PATTERN = Regex("dsh-mobile gateway: http://127\\.0\\.0\\.1:(\\d+)")

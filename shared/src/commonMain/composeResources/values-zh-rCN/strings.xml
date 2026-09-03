@@ -8,6 +8,7 @@
     <string name="step_number_install">1</string>
     <string name="step_start_title">启动本地服务</string>
     <string name="step_start_detail_proot">PRoot · DSH 网关</string>
+    <string name="step_start_detail_proroot">proroot · DSH 网关</string>
     <string name="step_start_detail_chroot">chroot（Root）· DSH 网关</string>
     <string name="step_number_start">2</string>
     <string name="step_web_title">打开 Web UI</string>
@@ -23,8 +24,10 @@
     <string name="runtime_version_unavailable">未提供制品</string>
     <string name="runtime_mode_title">UBUNTU 运行方式</string>
     <string name="runtime_mode_proot">PRoot</string>
+    <string name="runtime_mode_proroot">proroot</string>
     <string name="runtime_mode_chroot">chroot</string>
     <string name="runtime_mode_proot_detail">通过 PRoot 用户态隔离运行，无需 Root 权限。</string>
+    <string name="runtime_mode_proroot_detail">通过 proroot 的 LD_PRELOAD 转换运行，无需 Root，并避开 PRoot 的 ptrace 开销；兼容性仍属实验性质。</string>
     <string name="runtime_mode_chroot_detail">通过内核 chroot 机制运行 Ubuntu。必须取得 Root 权限，并会在每次启动前重新校验。</string>
     <string name="root_not_required">无需 Root 权限。</string>
     <string name="root_required">尚未取得 Root 权限。点击下方按钮后，Root 管理器将显示授权弹窗。</string>
@@ -69,6 +72,8 @@
     <string name="detail_extracting_entries">正在展开 Ubuntu · %1$d 项</string>
     <string name="detail_install_complete">安装完成</string>
     <string name="detail_starting">正在启动 PRoot、Ubuntu 和认证网关。</string>
+    <string name="detail_starting_proroot">正在启动 proroot、Ubuntu 和认证网关。</string>
+    <string name="detail_starting_chroot">正在启动 chroot、Ubuntu 和认证网关。</string>
     <string name="detail_running">认证后的 Web UI 仅通过本机回环地址提供。</string>
     <string name="detail_stopping">正在停止全部子进程。</string>
     <string name="detail_stopped">运行时已停止，Ubuntu 数据仍保留在应用私有目录。</string>

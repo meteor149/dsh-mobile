@@ -13,6 +13,7 @@ enum class RuntimePhase {
 
 enum class RuntimeMode {
     Proot,
+    Proroot,
     Chroot,
 }
 

@@ -14,6 +14,11 @@ runtime/dist/
 ├── libdsh_proot_loader.so
 ├── libandroid-shmem.so
 ├── libdsh_talloc.so
+├── libproroot.so
+├── libproroot-runtime.so
+├── libproroot-bridge.so
+├── libproroot-linker.so
+├── libproroot-stub-loader.so
 └── runtime-manifest.json
 ```
 
@@ -29,6 +34,15 @@ The PRoot build is sourced from
 changes the Termux package name to `ai.meteor.dshmobile`, compiles PRoot and
 its dependencies for AArch64, packages the loader separately, and rewrites the
 versioned `libtalloc` dependency to an APK-compatible library name.
+
+The five `libproroot*.so` files are the unmodified ARM64 binary release from
+[`coderredlab/proroot`](https://github.com/coderredlab/proroot). The launcher
+discovers its runtime, bridge, linker, and stub loader beside itself in the
+APK's extracted native-library directory. Their version and individual hashes
+are pinned in `versions.env`; the download step rejects any mismatch. The
+binaries use their [separate upstream license](../app/src/main/assets/licenses/proroot-LICENSE.txt),
+which permits redistribution of unmodified binaries only as part of a complete
+application package.
 
 ## Rootfs contents
 
@@ -64,12 +78,18 @@ PRoot only:
 bash runtime/proot/build-proot.sh
 ```
 
+proroot binary release only:
+
+```bash
+bash runtime/proroot/fetch-proroot.sh
+```
+
 Under WSL2, the temporary `termux-packages` checkout and compiler output use
 `/var/tmp/dsh-mobile-runtime/proot` on the native Linux filesystem. This avoids
 the severe small-file overhead of compiling on `/mnt/c`; final artifacts are
 still copied to `runtime/dist`.
 
-Generate the manifest after both steps:
+Generate the manifest after the rootfs, PRoot, and proroot steps:
 
 ```bash
 node tools/generate-runtime-manifest.mjs runtime/dist
@@ -83,7 +103,7 @@ available for environments that expose a compatible Docker CLI to PowerShell.
 ## Version updates
 
 Never change an artifact in place while retaining the same `RUNTIME_VERSION`.
-For an Ubuntu, Node, DSH, PRoot, or image recipe update:
+For an Ubuntu, Node, DSH, PRoot, proroot, or image recipe update:
 
 1. update the pinned values and checksums in `versions.env`; for DSH, also
    update `rootfs/dsh-package/package.json` and regenerate its lockfile;
@@ -97,16 +117,18 @@ replaceable rootfs versions under `files/runtime/versions`.
 
 ## Android execution modes
 
-The installed rootfs is shared by both modes. PRoot is the default and runs as
-the application UID. chroot is opt-in: the app asks the device's `su` provider
-for authorization, verifies that `id -u` returns `0`, and verifies it again
-before every start.
+The installed rootfs is shared by all three modes. PRoot is the default and
+runs as the application UID. proroot is an experimental, rootless alternative
+that uses an LD_PRELOAD-based runtime instead of ptrace; the supervisor passes
+only proroot-supported CLI options and provides a writable `PROROOT_TMP_DIR`.
+chroot is opt-in: the app asks the device's `su` provider for authorization,
+verifies that `id -u` returns `0`, and verifies it again before every start.
 
 The chroot supervisor bind-mounts `/dev`, `/proc`, `/sys`, the persistent home,
 DSH state, and workspaces into the rootfs. It uses a private mount namespace
 when Android provides `unshare`, forwards stop signals through a root-owned PID
 file, and unmounts the bind points on exit. Devices whose root policy or SELinux
-policy does not permit `mount`/`chroot` should continue to use PRoot. After a
+policy does not permit `mount`/`chroot` should use PRoot or proroot. After a
 chroot session exits, ownership of the rootfs and persistent data is restored to
-the application UID so the user can switch back to PRoot and runtime upgrades
-can still replace the installed rootfs.
+the application UID so the user can switch back to either rootless mode and
+runtime upgrades can still replace the installed rootfs.

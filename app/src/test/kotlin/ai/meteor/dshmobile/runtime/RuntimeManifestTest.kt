@@ -10,7 +10,7 @@ class RuntimeManifestTest {
         val manifest = Json.decodeFromString<RuntimeManifest>(
             """
             {
-              "schemaVersion": 1,
+              "schemaVersion": 2,
               "available": true,
               "runtimeVersion": "ubuntu-24.04_dsh-0.1.0-rc.6_1",
               "abi": "arm64-v8a",
@@ -24,6 +24,11 @@ class RuntimeManifestTest {
               "entrypoint": {
                 "prootLibrary": "libdsh_proot.so",
                 "loaderLibrary": "libdsh_proot_loader.so",
+                "prorootLibrary": "libproroot.so",
+                "prorootRuntimeLibrary": "libproroot-runtime.so",
+                "prorootBridgeLibrary": "libproroot-bridge.so",
+                "prorootLinkerLibrary": "libproroot-linker.so",
+                "prorootStubLoaderLibrary": "libproroot-stub-loader.so",
                 "guestCommand": "/usr/local/bin/dsh-mobile-gateway"
               },
               "sources": {
@@ -34,7 +39,8 @@ class RuntimeManifestTest {
                 "dshPackageIntegrity": "sha512-integrity",
                 "termuxProotVersion": "5.1.107.89",
                 "termuxProotCommit": "proot-commit",
-                "termuxPackagesCommit": "packages-commit"
+                "termuxPackagesCommit": "packages-commit",
+                "prorootVersion": "1.2.8"
               }
             }
             """.trimIndent(),
@@ -42,5 +48,16 @@ class RuntimeManifestTest {
 
         assertEquals("node-sha256", manifest.sources?.nodeDistributionSha256)
         assertEquals("sha512-integrity", manifest.sources?.dshPackageIntegrity)
+        assertEquals("1.2.8", manifest.sources?.prorootVersion)
+        assertEquals(
+            listOf(
+                "libproroot.so",
+                "libproroot-runtime.so",
+                "libproroot-bridge.so",
+                "libproroot-linker.so",
+                "libproroot-stub-loader.so",
+            ),
+            manifest.entrypoint.prorootLibraries,
+        )
     }
 }

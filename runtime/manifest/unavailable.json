@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "available": false,
   "runtimeVersion": "dev-unavailable",
   "abi": "arm64-v8a",
@@ -8,6 +8,11 @@
   "entrypoint": {
     "prootLibrary": "libdsh_proot.so",
     "loaderLibrary": "libdsh_proot_loader.so",
+    "prorootLibrary": "libproroot.so",
+    "prorootRuntimeLibrary": "libproroot-runtime.so",
+    "prorootBridgeLibrary": "libproroot-bridge.so",
+    "prorootLinkerLibrary": "libproroot-linker.so",
+    "prorootStubLoaderLibrary": "libproroot-stub-loader.so",
     "guestCommand": "/usr/local/bin/dsh-mobile-gateway"
   }
 }

@@ -53,7 +53,7 @@ class RuntimeManager private constructor(context: Context) {
             current.copy(
                 runtimeMode = mode,
                 rootAccess = when (mode) {
-                    RuntimeMode.Proot -> NotRequired
+                    RuntimeMode.Proot, RuntimeMode.Proroot -> NotRequired
                     RuntimeMode.Chroot -> if (
                         current.runtimeMode == RuntimeMode.Chroot && current.rootAccess == Granted
                     ) Granted else Required
@@ -244,7 +244,7 @@ class RuntimeManager private constructor(context: Context) {
         ?: RuntimeMode.Proot
 
     private fun rootStateFor(mode: RuntimeMode): RootAccessState = when (mode) {
-        RuntimeMode.Proot -> NotRequired
+        RuntimeMode.Proot, RuntimeMode.Proroot -> NotRequired
         RuntimeMode.Chroot -> RuntimeStateStore.state.value
             .takeIf { it.runtimeMode == RuntimeMode.Chroot && it.rootAccess == Granted }
             ?.rootAccess
