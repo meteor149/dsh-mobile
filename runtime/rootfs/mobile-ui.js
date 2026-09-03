@@ -239,10 +239,34 @@
     }
   }
 
+  const onSidebarClick = event => {
+    if (!media.matches || frame?.hasAttribute('data-sidebar-collapsed')) return
+    const target = event.target
+    if (!(target instanceof Element)) return
+
+    const sidebar = sidebarColumn()
+    if (sidebar === null || !sidebar.contains(target)) return
+
+    const button = target.closest('button[aria-label]')
+    const buttonLabel = button?.getAttribute('aria-label') ?? ''
+    if (button !== null && /new session|新建会话/iu.test(buttonLabel)) {
+      requestAnimationFrame(() => toggleSidebar(false))
+      return
+    }
+
+    const session = target.closest('[role="treeitem"][aria-selected]')
+    if (session === null) return
+    if (session.getAttribute('aria-selected') === 'true') return
+    if (target.closest('button, a, input, select, textarea, [role="button"], [role="menuitem"]')) return
+
+    requestAnimationFrame(() => toggleSidebar(false))
+  }
+
   const start = () => {
     const bodyObserver = new MutationObserver(scheduleSync)
     bodyObserver.observe(document.body, { childList: true, subtree: true })
     media.addEventListener('change', scheduleSync)
+    document.addEventListener('click', onSidebarClick, true)
     window.addEventListener('touchstart', onTouchStart, { passive: true })
     window.addEventListener('touchmove', onTouchMove, { passive: true })
     window.addEventListener('touchend', () => { swipeStart = null }, { passive: true })
