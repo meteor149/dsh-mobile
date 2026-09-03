@@ -96,7 +96,7 @@ private fun RuntimeWebView(
         }
     }
 
-    BackHandler(onBack = onBackToBackground)
+    BackHandler { webView.navigateBackOr(onBackToBackground) }
     androidx.compose.runtime.DisposableEffect(webView) {
         onDispose {
             webView.stopLoading()
@@ -110,6 +110,20 @@ private fun RuntimeWebView(
             .windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.safeDrawing)
             .imePadding(),
     )
+}
+
+private const val WEB_HISTORY_BACK_SCRIPT =
+    "(() => { if (window.navigation && window.navigation.canGoBack) { " +
+        "window.history.back(); return true; } return false; })()"
+
+private fun WebView.navigateBackOr(onNoHistory: () -> Unit) {
+    if (canGoBack()) {
+        goBack()
+        return
+    }
+    evaluateJavascript(WEB_HISTORY_BACK_SCRIPT) { handled ->
+        if (handled != "true") onNoHistory()
+    }
 }
 
 private fun createLockedDownWebView(context: Context, expected: Uri): WebView = WebView(context).apply {
