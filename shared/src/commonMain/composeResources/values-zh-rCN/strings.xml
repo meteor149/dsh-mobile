@@ -1,7 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="setup_closed_source_note">proroot 方案未开源。</string>
+    <string name="setup_remember_mode">记住选择，下次自动启动</string>
+    <string name="setup_badge">环境配置</string>
+    <string name="setup_step_install">安装环境</string>
+    <string name="setup_step_start">启动服务</string>
+    <string name="setup_step_open">打开界面</string>
+    <string name="setup_proot_summary">无需 Root · 推荐</string>
+    <string name="setup_proroot_summary">无需 Root · 未开源</string>
+    <string name="setup_chroot_summary">需要 Root · 内核运行</string>
+    <string name="setup_show_logs">查看日志</string>
+    <string name="setup_hide_logs">收起日志</string>
     <string name="brand_line">DEEPSEEK HARNESS  ·  移动版</string>
-    <string name="private_data_note">运行环境与项目文件均保存在应用私有目录。</string>
+    <string name="private_data_note">环境与文件保存在应用私有目录。</string>
 
     <string name="step_install_title">安装运行时</string>
     <string name="step_install_detail">Ubuntu 24.04 · ARM64</string>
@@ -20,24 +31,24 @@
     <string name="step_state_next">下一步</string>
     <string name="step_state_check">检查</string>
 
-    <string name="runtime_section">运行时</string>
+    <string name="runtime_section">运行时信息</string>
     <string name="runtime_version_unavailable">未提供制品</string>
-    <string name="runtime_mode_title">UBUNTU 运行方式</string>
+    <string name="runtime_mode_title">运行方式</string>
     <string name="runtime_mode_proot">PRoot</string>
     <string name="runtime_mode_proroot">proroot（未开源）</string>
     <string name="runtime_mode_chroot">chroot</string>
     <string name="runtime_mode_proot_detail">通过 PRoot 用户态隔离运行，无需 Root 权限。</string>
-    <string name="runtime_mode_proroot_detail">通过 proroot 的 LD_PRELOAD 转换运行，无需 Root，并避开 PRoot 的 ptrace 开销；兼容性仍属实验性质。proroot 方案未开源，本应用使用上游预编译二进制。</string>
+    <string name="runtime_mode_proroot_detail">使用上游预编译二进制。方案未开源，兼容性仍属实验性质。</string>
     <string name="runtime_mode_chroot_detail">通过内核 chroot 机制运行 Ubuntu。必须取得 Root 权限，并会在每次启动前重新校验。</string>
     <string name="root_not_required">无需 Root 权限。</string>
-    <string name="root_required">尚未取得 Root 权限。点击下方按钮后，Root 管理器将显示授权弹窗。</string>
+    <string name="root_required">使用 chroot 需要授予 Root 权限。</string>
     <string name="root_checking">正在检查 Root 权限…</string>
     <string name="root_granted">已取得 Root 权限，可以使用 chroot。</string>
     <string name="root_denied">Root 权限被拒绝，或未找到受支持的 su 命令。</string>
 
     <string name="action_install">安装运行时</string>
-    <string name="action_start">启动 DeepSeek Harness</string>
-    <string name="action_open">打开 DeepSeek Harness</string>
+    <string name="action_start">启动 Harness</string>
+    <string name="action_open">进入工作区</string>
     <string name="action_stop">停止运行时</string>
     <string name="action_processing">处理中…</string>
     <string name="action_waiting">等待运行时制品</string>
@@ -46,9 +57,9 @@
     <string name="action_root_required">请先授予 Root 权限</string>
 
     <string name="title_unavailable">运行时尚未打包</string>
-    <string name="title_not_installed">准备好后，再开始安装</string>
-    <string name="title_installing">正在安装本地运行时</string>
-    <string name="title_ready">运行时已安装</string>
+    <string name="title_not_installed">配置本地环境</string>
+    <string name="title_installing">正在准备你的环境</string>
+    <string name="title_ready">你的工作区已就绪</string>
     <string name="title_starting">正在启动 Harness</string>
     <string name="title_running">DeepSeek Harness 已就绪</string>
     <string name="title_stopping">正在停止本地服务</string>
@@ -64,8 +75,8 @@
     <string name="phase_failed">失败</string>
 
     <string name="detail_artifacts_unavailable">APK 中没有运行时制品。请运行 buildRuntime 后重新构建应用。</string>
-    <string name="detail_runtime_ready">Ubuntu 和 DeepSeek Harness 已安装，可以启动本地服务。</string>
-    <string name="detail_runtime_not_installed">已验证 APK 内的运行时清单，等待首次安装。</string>
+    <string name="detail_runtime_ready">启动 Harness，进入本地工作区。</string>
+    <string name="detail_runtime_not_installed">安装本地环境，开启你的工作区。</string>
     <string name="detail_installing">正在校验并展开版本化 Ubuntu 根文件系统。</string>
     <string name="detail_verifying_rootfs">正在校验根文件系统</string>
     <string name="detail_extracting_ubuntu">正在展开 Ubuntu</string>

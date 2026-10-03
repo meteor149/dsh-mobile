@@ -20,6 +20,12 @@ DSH Mobile 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harnes
 ## 应用效果
 
 <p align="center">
+  <img src="assets/dsh-setup.png" alt="Ubuntu 引导界面、运行方式选择和自动启动选项" width="280" />
+</p>
+
+<p align="center">Ubuntu 引导界面：运行方式选择与自动启动选项。</p>
+
+<p align="center">
   <img src="assets/dsh-web-ui.png" alt="首页" width="280" />
   <img src="assets/dsh-sidebar.png" alt="侧边栏" width="280" />
 </p>

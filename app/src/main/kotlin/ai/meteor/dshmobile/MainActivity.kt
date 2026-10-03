@@ -23,6 +23,7 @@ import androidx.core.net.toUri
 import androidx.core.view.doOnLayout
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.withResumed
 import ai.meteor.dsh.runtime.RuntimeManager
 import ai.meteor.dsh.runtime.RuntimePhase
 import ai.meteor.dshmobile.runtime.RuntimeService
@@ -35,7 +36,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         lifecycleScope.launch {
-            RuntimeManager.get(this@MainActivity).probe()
+            val manager = RuntimeManager.get(this@MainActivity)
+            manager.probe()
+            lifecycle.withResumed {
+                if (manager.claimRememberedLaunch()) launchRuntimeAction(RuntimeService.ACTION_START)
+            }
         }
 
         setContent {
@@ -58,6 +63,9 @@ class MainActivity : ComponentActivity() {
                         onStop = { launchRuntimeAction(RuntimeService.ACTION_STOP) },
                         onModeChange = { mode ->
                             RuntimeManager.get(this@MainActivity).selectRuntimeMode(mode)
+                        },
+                        onRememberModeChange = { remember ->
+                            RuntimeManager.get(this@MainActivity).setRememberRuntimeMode(remember)
                         },
                         onRequestRoot = {
                             lifecycleScope.launch {

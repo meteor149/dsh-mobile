@@ -51,14 +51,40 @@ class RuntimeManager private constructor(context: Context) {
     private val supervisor = UbuntuProcessSupervisor(context, rootAccess)
     private val operationMutex = Mutex()
     private val preferences = appContext.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+    private var sessionMode = if (preferences.getBoolean(PREFERENCE_REMEMBER_MODE, false)) {
+        preferences.getString(PREFERENCE_RUNTIME_MODE, null)
+            ?.let { saved -> RuntimeMode.entries.firstOrNull { it.name == saved } } ?: RuntimeMode.Proot
+    } else RuntimeMode.Proot
+    private var launchHandled = false
+
+    fun setRememberRuntimeMode(remember: Boolean) {
+        preferences.edit(commit = true) {
+            putBoolean(PREFERENCE_REMEMBER_MODE, remember)
+            if (remember) putString(PREFERENCE_RUNTIME_MODE, sessionMode.name)
+            else remove(PREFERENCE_RUNTIME_MODE)
+        }
+        RuntimeStateStore.set(RuntimeStateStore.state.value.copy(rememberRuntimeMode = remember))
+    }
+
+    /** One automatic launch per process; recreating the activity must not restart a stopped runtime. */
+    fun claimRememberedLaunch(): Boolean {
+        if (launchHandled) return false
+        launchHandled = true
+        return preferences.getBoolean(PREFERENCE_REMEMBER_MODE, false) &&
+            RuntimeStateStore.state.value.phase == Ready
+    }
 
     fun selectRuntimeMode(mode: RuntimeMode) {
         val current = RuntimeStateStore.state.value
         if (current.isBusy || current.phase == Running || current.rootAccess == Checking) return
-        preferences.edit { putString(PREFERENCE_RUNTIME_MODE, mode.name) }
+        sessionMode = mode
+        if (preferences.getBoolean(PREFERENCE_REMEMBER_MODE, false)) {
+            preferences.edit(commit = true) { putString(PREFERENCE_RUNTIME_MODE, mode.name) }
+        }
         RuntimeStateStore.set(
             current.copy(
                 runtimeMode = mode,
+                rememberRuntimeMode = preferences.getBoolean(PREFERENCE_REMEMBER_MODE, false),
                 rootAccess = when (mode) {
                     RuntimeMode.Proot, RuntimeMode.Proroot -> NotRequired
                     RuntimeMode.Chroot -> if (
@@ -98,6 +124,7 @@ class RuntimeManager private constructor(context: Context) {
                     runtimeVersion = manifest.runtimeVersion,
                     detail = RuntimeMessage(RuntimeMessageKind.ArtifactsUnavailable),
                     runtimeMode = mode,
+                    rememberRuntimeMode = preferences.getBoolean(PREFERENCE_REMEMBER_MODE, false),
                     rootAccess = rootState,
                 )
                 installer.probe(manifest) != null && dshInstaller.probe() != null -> RuntimeUiState(
@@ -105,6 +132,7 @@ class RuntimeManager private constructor(context: Context) {
                     runtimeVersion = manifest.runtimeVersion,
                     detail = RuntimeMessage(RuntimeMessageKind.RuntimeReady),
                     runtimeMode = mode,
+                    rememberRuntimeMode = preferences.getBoolean(PREFERENCE_REMEMBER_MODE, false),
                     rootAccess = rootState,
                 )
                 else -> RuntimeUiState(
@@ -112,6 +140,7 @@ class RuntimeManager private constructor(context: Context) {
                     runtimeVersion = manifest.runtimeVersion,
                     detail = RuntimeMessage(RuntimeMessageKind.RuntimeNotInstalled),
                     runtimeMode = mode,
+                    rememberRuntimeMode = preferences.getBoolean(PREFERENCE_REMEMBER_MODE, false),
                     rootAccess = rootState,
                 )
             }
@@ -130,6 +159,7 @@ class RuntimeManager private constructor(context: Context) {
                     detail = RuntimeMessage(RuntimeMessageKind.Installing),
                     progress = 0f,
                     runtimeMode = mode,
+                    rememberRuntimeMode = preferences.getBoolean(PREFERENCE_REMEMBER_MODE, false),
                     rootAccess = rootState,
                 ),
             )
@@ -152,6 +182,7 @@ class RuntimeManager private constructor(context: Context) {
                 runtimeVersion = manifest.runtimeVersion,
                 detail = RuntimeMessage(RuntimeMessageKind.RuntimeReady),
                 runtimeMode = mode,
+                rememberRuntimeMode = preferences.getBoolean(PREFERENCE_REMEMBER_MODE, false),
                 rootAccess = rootState,
             )
         }.getOrElse(::failureState).also(RuntimeStateStore::set)
@@ -175,6 +206,7 @@ class RuntimeManager private constructor(context: Context) {
                     runtimeVersion = manifest.runtimeVersion,
                     detail = RuntimeMessage(RuntimeMessageKind.Starting),
                     runtimeMode = mode,
+                    rememberRuntimeMode = preferences.getBoolean(PREFERENCE_REMEMBER_MODE, false),
                     rootAccess = rootState,
                 ),
             )
@@ -208,6 +240,7 @@ class RuntimeManager private constructor(context: Context) {
                     webUrl = authenticatedUrl,
                     logTail = RuntimeStateStore.state.value.logTail,
                     runtimeMode = mode,
+                    rememberRuntimeMode = preferences.getBoolean(PREFERENCE_REMEMBER_MODE, false),
                     rootAccess = rootState,
                 )
             } catch (error: Throwable) {
@@ -234,6 +267,7 @@ class RuntimeManager private constructor(context: Context) {
                             runtimeVersion = version,
                             detail = RuntimeMessage(RuntimeMessageKind.Stopped),
                             runtimeMode = selectedMode(),
+                            rememberRuntimeMode = preferences.getBoolean(PREFERENCE_REMEMBER_MODE, false),
                             rootAccess = rootStateFor(selectedMode()),
                         ),
                     )
@@ -259,16 +293,14 @@ class RuntimeManager private constructor(context: Context) {
             detail = RuntimeMessage(RuntimeMessageKind.Failed),
             logTail = RuntimeStateStore.state.value.logTail,
             runtimeMode = selectedMode(),
+            rememberRuntimeMode = preferences.getBoolean(PREFERENCE_REMEMBER_MODE, false),
             rootAccess = if (
                 selectedMode() == RuntimeMode.Chroot && RuntimeStateStore.state.value.rootAccess == Checking
             ) Denied else rootStateFor(selectedMode()),
         )
     }
 
-    private fun selectedMode(): RuntimeMode = preferences
-        .getString(PREFERENCE_RUNTIME_MODE, RuntimeMode.Proot.name)
-        ?.let { saved -> RuntimeMode.entries.firstOrNull { it.name == saved } }
-        ?: RuntimeMode.Proot
+    private fun selectedMode(): RuntimeMode = sessionMode
 
     private fun rootStateFor(mode: RuntimeMode): RootAccessState = when (mode) {
         RuntimeMode.Proot, RuntimeMode.Proroot -> NotRequired
@@ -294,3 +326,4 @@ private const val MAX_UI_LOG_LINES = 80
 private const val LOG_TAG = "RuntimeManager"
 private const val PREFERENCES_NAME = "runtime-settings"
 private const val PREFERENCE_RUNTIME_MODE = "runtime-mode"
+private const val PREFERENCE_REMEMBER_MODE = "remember-runtime-mode"

@@ -23,6 +23,12 @@ in the app’s WebView.
 ## App preview
 
 <p align="center">
+  <img src="Docs/assets/dsh-setup.png" alt="Ubuntu setup with execution mode selection and automatic launch option" width="280" />
+</p>
+
+<p align="center">Ubuntu setup, execution mode selection, and automatic launch.</p>
+
+<p align="center">
   <img src="Docs/assets/dsh-web-ui.png" alt="Home" width="280" />
   <img src="Docs/assets/dsh-sidebar.png" alt="Sidebar" width="280" />
 </p>

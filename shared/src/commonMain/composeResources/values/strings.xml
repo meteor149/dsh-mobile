@@ -1,7 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="setup_closed_source_note">proroot is not open source.</string>
+    <string name="setup_remember_mode">Remember &amp; auto-start</string>
+    <string name="setup_badge">Setup</string>
+    <string name="setup_step_install">Install</string>
+    <string name="setup_step_start">Start service</string>
+    <string name="setup_step_open">Open UI</string>
+    <string name="setup_proot_summary">No root · Recommended</string>
+    <string name="setup_proroot_summary">No root · Not open source</string>
+    <string name="setup_chroot_summary">Root required · Kernel execution</string>
+    <string name="setup_show_logs">View logs</string>
+    <string name="setup_hide_logs">Hide logs</string>
     <string name="brand_line">DEEPSEEK HARNESS  ·  MOBILE</string>
-    <string name="private_data_note">The runtime environment and project files are stored in the app-private directory.</string>
+    <string name="private_data_note">Your environment and files stay in app-private storage.</string>
 
     <string name="step_install_title">Install runtime</string>
     <string name="step_install_detail">Ubuntu 24.04 · ARM64</string>
@@ -20,35 +31,35 @@
     <string name="step_state_next">NEXT</string>
     <string name="step_state_check">CHECK</string>
 
-    <string name="runtime_section">RUNTIME</string>
+    <string name="runtime_section">Runtime details</string>
     <string name="runtime_version_unavailable">No artifact provided</string>
-    <string name="runtime_mode_title">UBUNTU EXECUTION MODE</string>
+    <string name="runtime_mode_title">Execution mode</string>
     <string name="runtime_mode_proot">PRoot</string>
     <string name="runtime_mode_proroot">proroot (not open source)</string>
     <string name="runtime_mode_chroot">chroot</string>
     <string name="runtime_mode_proot_detail">Runs without root access using PRoot userspace isolation.</string>
-    <string name="runtime_mode_proroot_detail">Runs without root access using proroot’s LD_PRELOAD translation, avoiding PRoot’s ptrace overhead. Experimental compatibility. The proroot implementation is not open source; this app uses upstream prebuilt binaries.</string>
+    <string name="runtime_mode_proroot_detail">Uses upstream prebuilt binaries. Not open source; compatibility may vary.</string>
     <string name="runtime_mode_chroot_detail">Runs Ubuntu with the kernel chroot mechanism. Root access is required and will be verified before every start.</string>
     <string name="root_not_required">Root access is not required.</string>
-    <string name="root_required">Root access has not been granted. Your root manager will show an authorization prompt.</string>
+    <string name="root_required">Authorize root access to use chroot.</string>
     <string name="root_checking">Checking root access…</string>
     <string name="root_granted">Root access granted. chroot is ready.</string>
     <string name="root_denied">Root access was denied or no supported su command was found.</string>
 
     <string name="action_install">Install runtime</string>
-    <string name="action_start">Start DeepSeek Harness</string>
-    <string name="action_open">Open DeepSeek Harness</string>
+    <string name="action_start">Launch Harness</string>
+    <string name="action_open">Open workspace</string>
     <string name="action_stop">Stop runtime</string>
     <string name="action_processing">Processing…</string>
     <string name="action_waiting">Waiting for runtime artifacts</string>
     <string name="action_request_root">Grant root access</string>
     <string name="action_retry_root">Retry root authorization</string>
-    <string name="action_root_required">Grant root access before starting</string>
+    <string name="action_root_required">Root authorization required</string>
 
     <string name="title_unavailable">Runtime is not packaged</string>
-    <string name="title_not_installed">Install when you are ready</string>
-    <string name="title_installing">Installing the local runtime</string>
-    <string name="title_ready">Runtime installed</string>
+    <string name="title_not_installed">Set up your workspace.</string>
+    <string name="title_installing">Preparing your workspace.</string>
+    <string name="title_ready">Your workspace is ready.</string>
     <string name="title_starting">Starting Harness</string>
     <string name="title_running">DeepSeek Harness is ready</string>
     <string name="title_stopping">Stopping the local service</string>
@@ -64,8 +75,8 @@
     <string name="phase_failed">FAILED</string>
 
     <string name="detail_artifacts_unavailable">This APK does not contain runtime artifacts. Run buildRuntime and rebuild the app.</string>
-    <string name="detail_runtime_ready">Ubuntu and DeepSeek Harness are installed. The local service is ready to start.</string>
-    <string name="detail_runtime_not_installed">The runtime manifest in the APK has been verified and is ready for first-time installation.</string>
+    <string name="detail_runtime_ready">Launch Harness to open your local workspace.</string>
+    <string name="detail_runtime_not_installed">Install Ubuntu and Harness to get started.</string>
     <string name="detail_installing">Verifying and extracting the versioned Ubuntu rootfs.</string>
     <string name="detail_verifying_rootfs">Verifying rootfs</string>
     <string name="detail_extracting_ubuntu">Extracting Ubuntu</string>

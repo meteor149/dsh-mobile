@@ -10,16 +10,16 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-internal val DeepSeekBlue = Color(0xFF4176E6)
-internal val DeepSeekBlueSoft = Color(0xFFEDF3FE)
-internal val Ink = Color(0xFF0F1115)
-internal val SecondaryInk = Color(0xFF61666B)
-internal val CaptionInk = Color(0xFFA2A4A6)
-internal val Canvas = Color(0xFFFFFFFF)
-internal val Layer = Color(0xFFF9FAFB)
-internal val Hairline = Color(0x1A000000)
-internal val Success = Color(0xFF22C55E)
-internal val Warning = Color(0xFFD98629)
+internal val DeepSeekBlue = Color(0xFF5E7198)
+internal val DeepSeekBlueSoft = Color(0xFFEEF1F7)
+internal val Ink = Color(0xFF181A1B)
+internal val SecondaryInk = Color(0xFF73777B)
+internal val CaptionInk = Color(0xFF767A7E)
+internal val Canvas = Color(0xFFF5F5F3)
+internal val Layer = Color(0xFFF0F0EE)
+internal val Hairline = Color(0x10000000)
+internal val Success = Color(0xFF337354)
+internal val Warning = Color(0xFF95621F)
 
 private val DshColorScheme = lightColorScheme(
     primary = Ink,
@@ -41,8 +41,8 @@ private val DshTypography = Typography(
         fontFamily = FontFamily.SansSerif,
         fontSize = 30.sp,
         lineHeight = 36.sp,
-        fontWeight = FontWeight.Medium,
-        letterSpacing = (-0.5).sp,
+        fontWeight = FontWeight.Normal,
+        letterSpacing = (-0.8).sp,
     ),
     titleMedium = TextStyle(
         fontFamily = FontFamily.SansSerif,

@@ -21,6 +21,7 @@ data class RuntimeUiState(
     val webUrl: String? = null,
     val logTail: List<String> = emptyList(),
     val runtimeMode: RuntimeMode = RuntimeMode.Proot,
+    val rememberRuntimeMode: Boolean = false,
     val rootAccess: RootAccessState = RootAccessState.NotRequired,
 ) {
     val isBusy: Boolean
