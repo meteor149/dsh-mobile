@@ -20,11 +20,25 @@ DSH Mobile is an unofficial Android host for
 official DSH Web UI inside an app-private Ubuntu ARM64 environment and opens it
 in a restricted local WebView.
 
+## App preview
+
+<p align="center">
+  <img src="Docs/assets/dsh-web-ui.png" alt="Home" width="280" />
+  <img src="Docs/assets/dsh-sidebar.png" alt="Sidebar" width="280" />
+</p>
+
+<p align="center">
+  <img src="Docs/assets/dsh-settings.png" alt="General settings" width="280" />
+  <img src="Docs/assets/dsh-models.png" alt="Model settings" width="280" />
+</p>
+
+<p align="center">English Web UI on an ARM64 Android device: home, sidebar, general settings, and model settings.</p>
+
 ## Highlights
 
 - **Explicit lifecycle** — install, start, and open only when you choose; nothing is installed on first launch.
 - **Verified runtime** — versioned Ubuntu 24.04 rootfs with checksum validation.
-- **Three execution modes** — use PRoot by default, try the lower-overhead rootless proroot backend, or choose kernel chroot on a rooted device.
+- **Three execution modes** — use PRoot by default, try the lower-overhead rootless proroot backend (not open source), or choose kernel chroot on a rooted device.
 - **Android-native supervision** — PRoot, proroot, and chroot sessions are managed by a foreground service.
 - **Local-only access** — authenticated loopback gateway for HTTP, SSE, and WebSocket traffic.
 - **Restricted WebView** — navigation is limited to the local DSH origin.
@@ -74,6 +88,8 @@ data, but they make different tradeoffs:
 
 Start with PRoot. proroot is a separately selectable experimental backend based
 on the binary release from [coderredlab/proroot](https://github.com/coderredlab/proroot).
+The proroot implementation is not open source; this app uses upstream prebuilt
+binaries under their separate license.
 Switching modes does not reinstall Ubuntu; after chroot exits, file ownership is
 restored to the app UID so the same data can be used by either rootless mode.
 

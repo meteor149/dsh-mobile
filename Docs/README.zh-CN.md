@@ -17,11 +17,25 @@
 
 DSH Mobile 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的非官方 Android 宿主应用。它在应用私有的 Ubuntu ARM64 环境中运行官方 DSH Web UI，并通过受限的本地 WebView 打开界面。
 
+## 应用效果
+
+<p align="center">
+  <img src="assets/dsh-web-ui.png" alt="首页" width="280" />
+  <img src="assets/dsh-sidebar.png" alt="侧边栏" width="280" />
+</p>
+
+<p align="center">
+  <img src="assets/dsh-settings.png" alt="通用设置" width="280" />
+  <img src="assets/dsh-models.png" alt="模型设置" width="280" />
+</p>
+
+<p align="center">ARM64 Android 真机上的英文界面：首页、侧边栏、通用设置和模型设置。</p>
+
 ## 主要特性
 
 - **明确的运行周期** — 安装、启动和打开均由用户主动操作，首次启动时不会自动安装任何内容。
 - **经过验证的运行时** — 版本化 Ubuntu 24.04 根文件系统，并进行校验和验证。
-- **三种运行方式** — 默认使用免 Root 的 PRoot，也可尝试低开销的免 Root proroot，或在已 Root 设备上选择内核 chroot。
+- **三种运行方式** — 默认使用免 Root 的 PRoot，也可尝试低开销的免 Root proroot（未开源），或在已 Root 设备上选择内核 chroot。
 - **Android 原生管理** — PRoot、proroot 与 chroot 会话均由 Android 前台服务管理。
 - **仅限本地访问** — 为 HTTP、SSE 和 WebSocket 流量提供经过身份验证的环回网关。
 - **受限 WebView** — 仅允许导航至本地 DSH 来源。
@@ -62,7 +76,7 @@ Node.js、DSH 和身份验证网关由仓库内部的 `:dsh-runtime` 模块维�
 | 安全影响 | 使用应用 UID 运行，并非安全边界 | 使用应用 UID 运行，并非安全边界 | Ubuntu 以真实 Root 运行，遭入侵时对设备的影响显著更大 |
 | 适用场景 | 大多数用户，以及需要最大可移植性的环境 | 希望测试更低运行开销的免 Root 用户 | 可信的已 Root 设备，且确实需要内核兼容行为时 |
 
-建议优先使用 PRoot。proroot 是基于 [coderredlab/proroot](https://github.com/coderredlab/proroot) 二进制发行版的独立实验后端。切换方式不会重新安装 Ubuntu；chroot 退出后会把文件所有权恢复为应用 UID，因此两种免 Root 方式都可以继续使用相同数据。
+建议优先使用 PRoot。proroot 是基于 [coderredlab/proroot](https://github.com/coderredlab/proroot) 二进制发行版的独立实验后端。proroot 方案未开源；本应用依据其独立许可证使用上游预编译二进制。切换方式不会重新安装 Ubuntu；chroot 退出后会把文件所有权恢复为应用 UID，因此两种免 Root 方式都可以继续使用相同数据。
 
 ## 构建
 
