@@ -2,8 +2,9 @@
 
 Ubuntu execution and image generation are owned by the sibling projects
 `android-ubuntu-runtime` and `android-ubuntu-image`. Their `runtime/dist`
-directories hold independent manifests/artifacts. See
-[the library integration guide](../Docs/ubuntu-libraries.md).
+directories hold independent manifests/artifacts. See the
+[Ubuntu runtime](https://github.com/meteor149/android-ubuntu-runtime) and
+[Ubuntu image](https://github.com/meteor149/android-ubuntu-image) repositories.
 
 This repository retains the proroot fetch scripts and license, because the
 unmodified binaries may only be redistributed inside a complete APK/AAB.

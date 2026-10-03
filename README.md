@@ -18,7 +18,7 @@
 DSH Mobile is an unofficial Android host for
 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness). It runs the
 official DSH Web UI inside an app-private Ubuntu ARM64 environment and opens it
-in a restricted local WebView.
+in the app’s WebView.
 
 ## App preview
 
@@ -34,129 +34,77 @@ in a restricted local WebView.
 
 <p align="center">English Web UI on an ARM64 Android device: home, sidebar, general settings, and model settings.</p>
 
-## Highlights
+## Features
 
-- **Explicit lifecycle** — install, start, and open only when you choose; nothing is installed on first launch.
-- **Verified runtime** — versioned Ubuntu 24.04 rootfs with checksum validation.
-- **Three execution modes** — use PRoot by default, try the lower-overhead rootless proroot backend (not open source), or choose kernel chroot on a rooted device.
-- **Android-native supervision** — PRoot, proroot, and chroot sessions are managed by a foreground service.
-- **Local-only access** — authenticated loopback gateway for HTTP, SSE, and WebSocket traffic.
-- **Restricted WebView** — navigation is limited to the local DSH origin.
-- **Phone-first Web UI** — the conversation uses the visible viewport, with
-  drawer navigation, horizontally scrollable settings categories, stacked
-  touch-sized settings controls, and a keyboard-safe composer.
-- **Private storage** — runtime and workspace data stay in the app-private directory.
+- Runs DSH in Ubuntu 24.04 ARM64, with checksum-verified runtime files.
+- Supports PRoot, proroot, and chroot, managed by a foreground service.
+- Adapts the Web UI for phones, with sidebar navigation, scrollable settings tabs, and an input area that stays visible above the keyboard.
+- Keeps Ubuntu and workspace data in the app-private directory.
+- Serves the Web UI through an authenticated local gateway.
 
-Node.js, DSH and its authenticated gateway live in the internal `:dsh-runtime` module. The independent Ubuntu libraries contain only the generic runtime and pure Ubuntu image; see [library integration](Docs/ubuntu-libraries.md).
+## Install and run
 
-## Requirements
+Requires an ARM64 device running Android 9 or newer. Root is only needed for chroot.
 
-- an `arm64-v8a` Android device;
-- Android 9 or newer.
-- Root access managed by a compatible `su` implementation is optional and only required for chroot mode.
+Download the APK from [Releases](https://github.com/meteor149/dsh-mobile/releases).
+Development builds are available under **Artifacts** in successful
+[GitHub Actions runs](https://github.com/meteor149/dsh-mobile/actions/workflows/android.yml).
 
-## Install
+1. Install the APK, then install the runtime from the app.
+2. Choose an execution mode. Start with PRoot; chroot requires root-manager authorization.
+3. Start DeepSeek Harness and open the Web UI.
+4. Configure a model provider and API key in Settings.
 
-For the latest development build, open a successful [GitHub Actions run](https://github.com/meteor149/dsh-mobile/actions/workflows/android.yml)
-and download the APK from its **Artifacts** section. Tagged builds are also
-published on the [Releases](https://github.com/meteor149/dsh-mobile/releases)
-page.
+Back navigates within the Web UI when history is available; otherwise it sends
+the app to the background. The runtime continues until stopped from the app or notification.
 
-On first launch:
+## Execution modes
 
-1. install the runtime;
-2. choose PRoot, proroot, or chroot (which requires approving the root-manager authorization prompt);
-3. start DeepSeek Harness;
-4. open the Web UI and finish the model setup there.
+All modes share the same Ubuntu environment and workspace data. Switching modes
+does not require reinstalling Ubuntu.
 
-Pressing Back in the Web UI sends the app to the background; the local runtime
-keeps running until it is stopped from the app or notification.
+| Mode | Root required | Notes |
+|---|---|---|
+| PRoot | No | Default. Uses ptrace-based system call translation. |
+| proroot | No | Experimental. Uses LD_PRELOAD translation to avoid ptrace overhead. Not open source. |
+| chroot | Yes | Uses the kernel chroot mechanism; compatibility depends on the kernel and root configuration. |
 
-## PRoot, proroot, or chroot?
+proroot uses prebuilt binaries from [coderredlab/proroot](https://github.com/coderredlab/proroot)
+under its [upstream license](app/src/main/assets/licenses/proroot-LICENSE.txt).
 
-All three modes use the same verified Ubuntu rootfs and persistent app-private
-data, but they make different tradeoffs:
-
-| | PRoot | proroot | chroot |
-|---|---|---|---|
-| Root access | Not required | Not required | Required through the device's `su` manager |
-| Compatibility | Recommended default; mature behavior on standard Android devices | Experimental; validated by upstream on recent ARM64 Android devices | Depends on the root solution, kernel, and SELinux policy |
-| Performance | Uses ptrace-based userspace syscall translation | Uses an LD_PRELOAD-based runtime and avoids ptrace overhead | Uses the kernel directly and is generally fastest |
-| Linux behavior | Emulates root and some filesystem behavior | Emulates root and filesystem behavior; edge cases may differ from PRoot | Provides real chroot and mount behavior, but is still not a full container |
-| Security impact | Runs with the app UID; not a security boundary | Runs with the app UID; not a security boundary | Runs Ubuntu as real root; compromise has substantially greater device impact |
-| Best suited for | Most users and maximum portability | Rootless users testing lower runtime overhead | Trusted rooted devices where kernel-compatible behavior matters |
-
-Start with PRoot. proroot is a separately selectable experimental backend based
-on the binary release from [coderredlab/proroot](https://github.com/coderredlab/proroot).
-The proroot implementation is not open source; this app uses upstream prebuilt
-binaries under their separate license.
-Switching modes does not reinstall Ubuntu; after chroot exits, file ownership is
-restored to the app UID so the same data can be used by either rootless mode.
+PRoot and proroot run as the Android app UID and are not security boundaries.
+chroot runs Ubuntu as root; use it only on a trusted device.
 
 ## Build
 
-The Android host requires JDK 21 and Android SDK 36. Ubuntu libraries are
-resolved from Maven Central by default; sibling checkouts are optional.
-See the [library guide](Docs/ubuntu-libraries.md) for local library development:
-
-```bash
-./gradlew :dsh-runtime:testDebugUnitTest :shared:testDebugUnitTest :app:testDebugUnitTest :app:assembleDebug
-```
-
-Without runtime artifacts, this produces a host-only diagnostic APK. A complete
-APK additionally requires Node.js, Docker with BuildKit, with ARM64 emulation (QEMU):
+Requires JDK 21 and Android SDK 36. Building the runtime also requires Node.js,
+Docker with BuildKit, and ARM64 emulation (QEMU); see [runtime build details](runtime/README.md).
+Ubuntu libraries are downloaded from Maven Central by default.
 
 ```bash
 ./gradlew buildRuntime
 ./gradlew :app:assembleDebug
 ```
 
-The APK is written to `app/build/outputs/apk/debug/app-debug.apk`. Each Ubuntu
-library owns its pinned versions, build recipe, and ignored `runtime/dist`.
-This app retains the proroot pins in [`runtime/versions.env`](runtime/versions.env).
+Output: `app/build/outputs/apk/debug/app-debug.apk`.
+Without runtime artifacts, the app builds in diagnostic mode and cannot start DSH.
 
-## Reusable Android libraries
+Run checks with:
 
-Ubuntu execution is available as `ubuntu-runtime`, and the root filesystem as
-`ubuntu-image`. They live in the independent `android-ubuntu-runtime` and
-`android-ubuntu-image` repositories, with separate Maven versions.
-See [library integration and publishing](Docs/ubuntu-libraries.md) for the public
-API, a standalone Maven consumer, and publishing commands.
-
-## Versioning
-
-`APP_VERSION_NAME` and `APP_VERSION_CODE` in [`gradle.properties`](gradle.properties)
-are the single source of truth for both Gradle and GitHub Actions. Version names
-follow Semantic Versioning; prereleases use suffixes such as `-beta.1`. Every
-distributed APK increments the integer `APP_VERSION_CODE`, including consecutive
-prereleases. Release tags use the matching `v<version>` form, for example
-`v0.0.1` or `v0.0.2-beta.1`.
-
-## Architecture
-
-```text
-Android / Compose
-      │
-foreground service
-      │
-PRoot (app UID) ─┐
-proroot (app UID) ├── Ubuntu ARM64 ── dsh web
-chroot (root) ────┘
-      │
-authenticated 127.0.0.1 gateway
-      │
-restricted WebView
+```bash
+./gradlew :dsh-runtime:testDebugUnitTest :shared:testDebugUnitTest :app:testDebugUnitTest
 ```
 
-PRoot and proroot do not grant root privileges and are not security boundaries;
-in those modes DSH runs with the Android application UID. chroot mode explicitly
-requests and verifies UID 0, so only enable it on a device and root manager you trust.
-See [`runtime/README.md`](runtime/README.md) for the runtime layout, artifact
-contract, execution modes, and update process.
+Node.js, DSH, and the gateway are maintained in `:dsh-runtime`. The reusable Ubuntu
+libraries are maintained in [android-ubuntu-runtime](https://github.com/meteor149/android-ubuntu-runtime)
+and [android-ubuntu-image](https://github.com/meteor149/android-ubuntu-image).
+
+For releases, update `APP_VERSION_NAME` and increment `APP_VERSION_CODE` in
+[`gradle.properties`](gradle.properties), then push the matching `v<version>` tag.
+GitHub Actions builds and publishes the signed APK.
 
 ## License
 
-DSH Mobile source code is licensed under the [Apache License 2.0](LICENSE).
-The unmodified proroot binaries packaged by complete runtime builds have a
-[separate upstream license](app/src/main/assets/licenses/proroot-LICENSE.txt)
-and are attributed to [proroot](https://github.com/coderredlab/proroot).
+DSH Mobile source code is licensed under [Apache License 2.0](LICENSE).
+The bundled proroot binaries are not open source and use a
+[separate upstream license](app/src/main/assets/licenses/proroot-LICENSE.txt).
