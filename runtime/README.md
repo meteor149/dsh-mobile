@@ -1,134 +1,28 @@
-# Runtime build
+# DSH Mobile runtime integration
 
-`runtime/dist` is the only hand-off point between the Linux build pipeline and
-the Android build. It is intentionally ignored by Git.
+Ubuntu execution and image generation are owned by the sibling projects
+`android-ubuntu-runtime` and `android-ubuntu-image`. Their `runtime/dist`
+directories hold independent manifests/artifacts. See
+[the library integration guide](../Docs/ubuntu-libraries.md).
 
-## Expected artifacts
+This repository retains the proroot fetch scripts and license, because the
+unmodified binaries may only be redistributed inside a complete APK/AAB.
+`runtime/versions.env` pins that app-specific binary release.
 
-After a complete build the directory contains:
-
-```text
-runtime/dist/
-├── dsh-ubuntu-arm64.tar.zst
-├── libdsh_proot.so
-├── libdsh_proot_loader.so
-├── libandroid-shmem.so
-├── libdsh_talloc.so
-├── libproroot.so
-├── libproroot-runtime.so
-├── libproroot-bridge.so
-├── libproroot-linker.so
-├── libproroot-stub-loader.so
-└── runtime-manifest.json
-```
-
-`libdsh_proot.so` is the PRoot PIE executable with an APK-compatible filename,
-not a JNI library. Likewise, `libdsh_proot_loader.so` is the unbundled PRoot
-loader. Android extracts both from `jniLibs` onto its executable native-library
-filesystem, which avoids executing files from writable app storage on modern
-target SDK levels.
-
-The PRoot build is sourced from
-[`termux/proot`](https://github.com/termux/proot) through the official
-[`termux-packages`](https://github.com/termux/termux-packages) recipe. The build
-changes the Termux package name to `ai.meteor.dshmobile`, compiles PRoot and
-its dependencies for AArch64, packages the loader separately, and rewrites the
-versioned `libtalloc` dependency to an APK-compatible library name.
-
-The five `libproroot*.so` files are the unmodified ARM64 binary release from
-[`coderredlab/proroot`](https://github.com/coderredlab/proroot). The launcher
-discovers its runtime, bridge, linker, and stub loader beside itself in the
-APK's extracted native-library directory. Their version and individual hashes
-are pinned in `versions.env`; the download step rejects any mismatch. The
-binaries use their [separate upstream license](../app/src/main/assets/licenses/proroot-LICENSE.txt),
-which permits redistribution of unmodified binaries only as part of a complete
-application package.
-
-## Rootfs contents
-
-The Ubuntu image contains fixed versions of:
-
-- Ubuntu 24.04 ARM64;
-- Node.js from the pinned official ARM64 distribution archive;
-- the official `@deepseek-ai/dsh` npm release installed with `npm ci` from a
-  committed lockfile;
-- a local WebView enhancement layer, which turns the narrow-screen shell into
-  a touch-first single-column layout with off-canvas panels and a keyboard-safe
-  composer, and reshapes settings into a full-width sheet with horizontally
-  scrollable categories and stacked controls without replacing the upstream DSH UI;
-- Linux ARM64 builds of native Node dependencies such as `node-pty`;
-- Git, OpenSSH client, Python 3, ripgrep, curl, and CA certificates;
-- `dsh-mobile-gateway`, the authenticated loopback reverse proxy.
-
-Build tools exist only in the image builder stage. Users can install additional
-tools with `apt` at runtime, although such modifications belong to the installed
-rootfs version and are not migrated automatically to a newer runtime.
-
-## Independent build steps
-
-Rootfs only:
-
-```bash
-bash runtime/rootfs/build-rootfs.sh
-```
-
-PRoot only:
-
-```bash
-bash runtime/proot/build-proot.sh
-```
-
-proroot binary release only:
+`./gradlew buildRuntime` builds the internal `:dsh-runtime` Node/DSH payload,
+fetches proroot and generates a proroot-only app manifest. Ubuntu libraries are
+resolved from Maven Central; set `BUILD_UBUNTU_LIBRARIES=true` to additionally
+build the sibling library artifacts. Set `UBUNTU_SOURCE_DIR` if
+the library repositories are not beside DSH Mobile. Node.js, Docker and the
+Linux/WSL2 Termux build environment are still required for a full source build.
 
 ```bash
 bash runtime/proroot/fetch-proroot.sh
-```
-
-Under WSL2, the temporary `termux-packages` checkout and compiler output use
-`/var/tmp/dsh-mobile-runtime/proot` on the native Linux filesystem. This avoids
-the severe small-file overhead of compiling on `/mnt/c`; final artifacts are
-still copied to `runtime/dist`.
-
-Generate the manifest after the rootfs, PRoot, and proroot steps:
-
-```bash
-node tools/generate-runtime-manifest.mjs runtime/dist
+node tools/generate-runtime-manifest.mjs runtime/dist --component proroot
 ./gradlew :app:prepareRuntimeAssets
 ```
 
-On Windows, run the Linux entry points inside WSL2 using the Docker Engine
-installed in that distribution. `runtime/rootfs/build-rootfs.ps1` remains
-available for environments that expose a compatible Docker CLI to PowerShell.
-
-## Version updates
-
-Never change an artifact in place while retaining the same `RUNTIME_VERSION`.
-For an Ubuntu, Node, DSH, PRoot, proroot, or image recipe update:
-
-1. update the pinned values and checksums in `versions.env`; for DSH, also
-   update `rootfs/dsh-package/package.json` and regenerate its lockfile;
-2. increment `RUNTIME_VERSION`;
-3. rebuild all artifacts;
-4. run the Android and gateway tests;
-5. test installation and DSH startup on an ARM64 device.
-
-The Android installer keeps user data under `files/linux-data` and installs
-replaceable rootfs versions under `files/runtime/versions`.
-
-## Android execution modes
-
-The installed rootfs is shared by all three modes. PRoot is the default and
-runs as the application UID. proroot is an experimental, rootless alternative
-that uses an LD_PRELOAD-based runtime instead of ptrace; the supervisor passes
-only proroot-supported CLI options and provides a writable `PROROOT_TMP_DIR`.
-chroot is opt-in: the app asks the device's `su` provider for authorization,
-verifies that `id -u` returns `0`, and verifies it again before every start.
-
-The chroot supervisor bind-mounts `/dev`, `/proc`, `/sys`, the persistent home,
-DSH state, and workspaces into the rootfs. It uses a private mount namespace
-when Android provides `unshare`, forwards stop signals through a root-owned PID
-file, and unmounts the bind points on exit. Devices whose root policy or SELinux
-policy does not permit `mount`/`chroot` should use PRoot or proroot. After a
-chroot session exits, ownership of the rootfs and persistent data is restored to
-the application UID so the user can switch back to either rootless mode and
-runtime upgrades can still replace the installed rootfs.
+Do not include proroot binary artifacts in either library's Maven AAR.
+All backends keep persistent home/workspace data in the host app's private
+storage. PRoot/proroot run under the app UID; chroot explicitly requests root
+from the device's su manager and restores app ownership when it stops.

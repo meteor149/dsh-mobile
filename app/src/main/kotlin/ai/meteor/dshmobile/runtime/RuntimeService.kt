@@ -1,5 +1,8 @@
 package ai.meteor.dshmobile.runtime
 
+import ai.meteor.dsh.runtime.RuntimeManager
+import ai.meteor.dsh.runtime.RuntimeStateStore
+
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -12,7 +15,7 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import ai.meteor.dshmobile.MainActivity
 import ai.meteor.dshmobile.R
-import ai.meteor.dshmobile.runtime.RuntimePhase.Running
+import ai.meteor.dsh.runtime.RuntimePhase.Running
 import kotlinx.coroutines.launch
 
 class RuntimeService : LifecycleService() {

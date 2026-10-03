@@ -61,8 +61,10 @@ jobs:
         id: runtime-cache
         uses: actions/cache@v6
         with:
-          path: runtime/dist
-          key: runtime-${{ runner.os }}-${{ hashFiles('runtime/versions.env', 'runtime/rootfs/**', 'runtime/proot/**', 'runtime/proroot/**', 'tools/generate-runtime-manifest.mjs') }}
+          path: |
+            runtime/dist
+            dsh-runtime/runtime/dist
+          key: runtime-${{ runner.os }}-${{ hashFiles('runtime/versions.env', 'runtime/proroot/**', 'dsh-runtime/runtime/**', 'dsh-runtime/tools/**', 'tools/generate-runtime-manifest.mjs') }}
 
       - name: Build runtime
         if: steps.runtime-cache.outputs.cache-hit != 'true'
@@ -129,7 +131,12 @@ jobs:
           echo "signed=true" >> "$GITHUB_OUTPUT"
 
       - name: Test and package
-        run: ./gradlew :shared:testDebugUnitTest :app:testDebugUnitTest :app:assembleRelease
+        run: |
+          node --test tools/generate-runtime-manifest.test.mjs dsh-runtime/runtime/rootfs/gateway.test.mjs dsh-runtime/tools/generate-runtime-manifest.test.mjs
+          ./gradlew :dsh-runtime:testDebugUnitTest :shared:testDebugUnitTest :app:testDebugUnitTest :app:assembleRelease
+
+      - name: Verify Maven dependency resolution
+        run: ./gradlew :app:dependencies --configuration debugRuntimeClasspath
 
       - name: Stage release APK
         id: package

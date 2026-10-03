@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /opt/node/bin/node --expose-internals /opt/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js "$@"

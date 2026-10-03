@@ -33,6 +33,8 @@ in a restricted local WebView.
   touch-sized settings controls, and a keyboard-safe composer.
 - **Private storage** — runtime and workspace data stay in the app-private directory.
 
+Node.js, DSH and its authenticated gateway live in the internal `:dsh-runtime` module. The independent Ubuntu libraries contain only the generic runtime and pure Ubuntu image; see [library integration](Docs/ubuntu-libraries.md).
+
 ## Requirements
 
 - an `arm64-v8a` Android device;
@@ -77,24 +79,33 @@ restored to the app UID so the same data can be used by either rootless mode.
 
 ## Build
 
-The Android host requires JDK 21 and Android SDK 36:
+The Android host requires JDK 21 and Android SDK 36. Ubuntu libraries are
+resolved from Maven Central by default; sibling checkouts are optional.
+See the [library guide](Docs/ubuntu-libraries.md) for local library development:
 
 ```bash
-./gradlew :shared:testDebugUnitTest :app:testDebugUnitTest :app:assembleDebug
+./gradlew :dsh-runtime:testDebugUnitTest :shared:testDebugUnitTest :app:testDebugUnitTest :app:assembleDebug
 ```
 
 Without runtime artifacts, this produces a host-only diagnostic APK. A complete
-APK additionally requires Node.js, Docker with BuildKit, and the Linux/WSL2
-environment used by the Termux package builder:
+APK additionally requires Node.js, Docker with BuildKit, with ARM64 emulation (QEMU):
 
 ```bash
 ./gradlew buildRuntime
 ./gradlew :app:assembleDebug
 ```
 
-The APK is written to `app/build/outputs/apk/debug/app-debug.apk`. Runtime input
-versions and hashes are pinned in [`runtime/versions.env`](runtime/versions.env);
-generated artifacts under `runtime/dist` are intentionally not committed.
+The APK is written to `app/build/outputs/apk/debug/app-debug.apk`. Each Ubuntu
+library owns its pinned versions, build recipe, and ignored `runtime/dist`.
+This app retains the proroot pins in [`runtime/versions.env`](runtime/versions.env).
+
+## Reusable Android libraries
+
+Ubuntu execution is available as `ubuntu-runtime`, and the root filesystem as
+`ubuntu-image`. They live in the independent `android-ubuntu-runtime` and
+`android-ubuntu-image` repositories, with separate Maven versions.
+See [library integration and publishing](Docs/ubuntu-libraries.md) for the public
+API, a standalone Maven consumer, and publishing commands.
 
 ## Versioning
 

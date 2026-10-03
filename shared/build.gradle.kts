@@ -14,13 +14,19 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+    implementation(project(":dsh-runtime"))
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
             implementation(compose.components.resources)
         }
+        androidMain.dependencies {
+    implementation(project(":dsh-runtime"))
+            implementation("io.github.meteor149:ubuntu-runtime:${providers.gradleProperty("UBUNTU_RUNTIME_VERSION").get()}")
+        }
         commonTest.dependencies {
+    implementation(project(":dsh-runtime"))
             implementation(kotlin("test"))
         }
     }

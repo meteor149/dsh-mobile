@@ -10,7 +10,7 @@ plugins {
 
 tasks.register<Exec>("buildRuntime") {
     group = "runtime"
-    description = "Builds Ubuntu/DSH and PRoot, then fetches the pinned ARM64 proroot runtime."
+    description = "Builds the app-owned DSH payload and fetches the pinned ARM64 proroot runtime."
     workingDir(rootDir)
     if (System.getProperty("os.name").startsWith("Windows", ignoreCase = true)) {
         commandLine("pwsh", "-NoProfile", "-File", "runtime/build-runtime.ps1")

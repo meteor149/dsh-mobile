@@ -7,6 +7,10 @@ local.properties
 runtime/dist/*
 !runtime/dist/.gitkeep
 runtime/.work/
-artifacts/
 
-_libraries/
+# Local Maven credentials and private signing keys
+private-key.asc
+secret-key.asc
+secring.gpg
+*.keystore
+*.jks

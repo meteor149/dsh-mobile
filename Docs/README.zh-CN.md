@@ -28,6 +28,8 @@ DSH Mobile 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harnes
 - **手机优先的 Web UI** — 会话跟随可视视口显示，并提供抽屉导航、横滑设置分类、适合触控的单列设置项和不被软键盘遮挡的输入区。
 - **私有存储** — 运行时和工作区数据均保存在应用私有目录中。
 
+Node.js、DSH 和身份验证网关由仓库内部的 `:dsh-runtime` 模块维护。两个独立 Ubuntu 库只包含通用运行能力和纯 Ubuntu 镜像，接入说明见 [库集成文档](ubuntu-libraries.md)。
+
 ## 系统要求
 
 - `arm64-v8a` Android 设备；
@@ -64,20 +66,26 @@ DSH Mobile 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harnes
 
 ## 构建
 
-Android 宿主应用需要 JDK 21 和 Android SDK 36：
+Android 宿主应用需要 JDK 21 和 Android SDK 36。源码开发时，请将 `android-ubuntu-runtime` 和 `android-ubuntu-image` 两个仓库放在本项目同级目录；Maven 接入方式见[库接入文档](ubuntu-libraries.md)。
 
 ```bash
-./gradlew :shared:testDebugUnitTest :app:testDebugUnitTest :app:assembleDebug
+./gradlew :dsh-runtime:testDebugUnitTest :shared:testDebugUnitTest :app:testDebugUnitTest :app:assembleDebug
 ```
 
-缺少运行时制品时，该命令会生成仅包含宿主应用、用于诊断的 APK。构建完整 APK 还需要 Node.js、启用 BuildKit 的 Docker，以及供 Termux 软件包构建器使用的 Linux/WSL2 环境：
+缺少运行时制品时，该命令会生成仅包含宿主应用、用于诊断的 APK。构建完整 APK 还需要 Node.js、启用 BuildKit 的 Docker，以及 ARM64 模拟支持（QEMU）：
 
 ```bash
 ./gradlew buildRuntime
 ./gradlew :app:assembleDebug
 ```
 
-APK 输出至 `app/build/outputs/apk/debug/app-debug.apk`。运行时输入的版本和哈希值固定在 [`runtime/versions.env`](../runtime/versions.env) 中；生成的 `runtime/dist` 制品不会提交到版本库。
+APK 输出至 `app/build/outputs/apk/debug/app-debug.apk`。各 Ubuntu 库自己维护输入版本和生成制品；本项目的 [`runtime/versions.env`](../runtime/versions.env) 继续管理 proroot 版本。生成的 `runtime/dist` 制品不会提交到版本库。
+
+## 可复用的 Android 库
+
+Ubuntu 运行能力已拆分为 `ubuntu-runtime`，镜像拆分为 `ubuntu-image`。
+两个库分别位于独立仓库 `android-ubuntu-runtime` 和 `android-ubuntu-image`，可独立版本管理并发布到 Maven。
+详见 [接入与发布文档](ubuntu-libraries.md)。
 
 ## 版本管理
 

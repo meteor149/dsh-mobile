@@ -23,10 +23,10 @@ import androidx.core.net.toUri
 import androidx.core.view.doOnLayout
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import ai.meteor.dshmobile.runtime.RuntimeManager
-import ai.meteor.dshmobile.runtime.RuntimePhase
+import ai.meteor.dsh.runtime.RuntimeManager
+import ai.meteor.dsh.runtime.RuntimePhase
 import ai.meteor.dshmobile.runtime.RuntimeService
-import ai.meteor.dshmobile.runtime.RuntimeStateStore
+import ai.meteor.dsh.runtime.RuntimeStateStore
 import ai.meteor.dshmobile.ui.DshMobileApp
 import ai.meteor.dshmobile.ui.DshMobileTheme
 import kotlinx.coroutines.launch

@@ -6,8 +6,13 @@ import process from 'node:process'
 
 const projectRoot = path.resolve(import.meta.dirname, '..')
 const dist = path.resolve(process.argv[2] ?? path.join(projectRoot, 'runtime', 'dist'))
+const componentIndex = process.argv.indexOf('--component')
+const component = componentIndex < 0 ? 'all' : process.argv[componentIndex + 1]
+if (!['all', 'engine', 'image', 'proroot'].includes(component)) {
+  throw new Error('Expected --component all, engine, image, or proroot')
+}
 const versions = parseEnv(await readFile(path.join(projectRoot, 'runtime', 'versions.env'), 'utf8'))
-const rootfsFile = 'dsh-ubuntu-arm64.tar.zst'
+const rootfsFile = 'ubuntu-arm64.tar.zst'
 const nativeFiles = [
   ['libdsh_proot.so', 'libdsh_proot.so'],
   ['libdsh_proot_loader.so', 'libdsh_proot_loader.so'],
@@ -21,9 +26,11 @@ const nativeFiles = [
 ]
 
 const rootfsPath = path.join(dist, rootfsFile)
-const rootfsStat = await stat(rootfsPath)
+const rootfsStat = ['all', 'image'].includes(component) ? await stat(rootfsPath) : null
 const nativeLibraries = []
 for (const [file, packagedName, pinnedShaName] of nativeFiles) {
+  const isProroot = file.startsWith('libproroot')
+  if (component === 'image' || (component === 'engine' && isProroot) || (component === 'proroot' && !isProroot)) continue
   const artifactPath = path.join(dist, file)
   await stat(artifactPath)
   const actualSha256 = await sha256(artifactPath)
@@ -41,12 +48,12 @@ const manifest = {
   available: true,
   runtimeVersion: required(versions, 'RUNTIME_VERSION'),
   abi: 'arm64-v8a',
-  rootfs: {
+  rootfs: rootfsStat ? {
     file: rootfsFile,
     sha256: await sha256(rootfsPath),
     compressedBytes: rootfsStat.size,
     minimumFreeBytes: Math.max(2_147_483_648, rootfsStat.size * 5),
-  },
+  } : undefined,
   nativeLibraries,
   entrypoint: {
     prootLibrary: 'libdsh_proot.so',
@@ -56,14 +63,10 @@ const manifest = {
     prorootBridgeLibrary: 'libproroot-bridge.so',
     prorootLinkerLibrary: 'libproroot-linker.so',
     prorootStubLoaderLibrary: 'libproroot-stub-loader.so',
-    guestCommand: '/usr/local/bin/dsh-mobile-gateway',
+    guestCommand: '/bin/bash',
   },
   sources: {
     ubuntuImage: required(versions, 'UBUNTU_IMAGE'),
-    nodeVersion: required(versions, 'NODE_VERSION'),
-    nodeDistributionSha256: required(versions, 'NODE_LINUX_ARM64_GZIP_SHA256'),
-    dshVersion: required(versions, 'DSH_VERSION'),
-    dshPackageIntegrity: required(versions, 'DSH_PACKAGE_INTEGRITY'),
     termuxProotVersion: required(versions, 'TERMUX_PROOT_VERSION'),
     termuxProotCommit: required(versions, 'TERMUX_PROOT_COMMIT'),
     termuxPackagesCommit: required(versions, 'TERMUX_PACKAGES_COMMIT'),

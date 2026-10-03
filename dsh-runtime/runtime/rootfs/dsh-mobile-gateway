@@ -1,0 +1,4 @@
+#!/bin/sh
+export DSH_NODE_BIN=/opt/node/bin/node
+export DSH_CLI_PATH=/opt/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js
+exec /opt/node/bin/node /opt/dsh-mobile/gateway.mjs "$@"

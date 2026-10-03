@@ -2,14 +2,12 @@
 set -euo pipefail
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 project_root="$(cd -- "$script_dir/.." && pwd)"
-
-bash "$script_dir/rootfs/build-rootfs.sh"
-bash "$script_dir/proot/build-proot.sh"
-bash "$script_dir/proroot/fetch-proroot.sh"
-if ! command -v node >/dev/null 2>&1; then
-  echo "error: Node.js is required to generate the runtime manifest" >&2
-  echo "install it inside WSL (for example: sudo apt-get install nodejs) and retry" >&2
-  exit 1
+source_dir="${UBUNTU_SOURCE_DIR:-$(dirname "$project_root")}"
+if [[ "${BUILD_UBUNTU_LIBRARIES:-false}" == "true" ]]; then
+  bash "$source_dir/android-ubuntu-runtime/runtime/build-runtime.sh"
+  bash "$source_dir/android-ubuntu-image/runtime/build-runtime.sh"
 fi
-node "$project_root/tools/generate-runtime-manifest.mjs" "$script_dir/dist"
+bash "$project_root/dsh-runtime/runtime/build-runtime.sh"
+bash "$script_dir/proroot/fetch-proroot.sh"
+node "$project_root/tools/generate-runtime-manifest.mjs" "$script_dir/dist" --component proroot
 "$project_root/gradlew" :app:prepareRuntimeAssets

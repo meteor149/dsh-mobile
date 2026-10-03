@@ -13,6 +13,6 @@
     "prorootBridgeLibrary": "libproroot-bridge.so",
     "prorootLinkerLibrary": "libproroot-linker.so",
     "prorootStubLoaderLibrary": "libproroot-stub-loader.so",
-    "guestCommand": "/usr/local/bin/dsh-mobile-gateway"
+    "guestCommand": "/bin/bash"
   }
 }
