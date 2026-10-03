@@ -79,10 +79,10 @@ android {
             // The runtime manifest hashes the exact Termux build outputs. Keep AGP from
             // rewriting those files so packaged bytes remain independently verifiable.
             keepDebugSymbols += setOf(
-                "**/libdsh_proot.so",
-                "**/libdsh_proot_loader.so",
+                "**/libubuntu_proot.so",
+                "**/libubuntu_proot_loader.so",
                 "**/libandroid-shmem.so",
-                "**/libdsh_talloc.so",
+                "**/libubuntu_talloc.so",
                 "**/libproroot.so",
                 "**/libproroot-runtime.so",
                 "**/libproroot-bridge.so",

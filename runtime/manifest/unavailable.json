@@ -6,8 +6,8 @@
   "rootfs": null,
   "nativeLibraries": [],
   "entrypoint": {
-    "prootLibrary": "libdsh_proot.so",
-    "loaderLibrary": "libdsh_proot_loader.so",
+    "prootLibrary": "libubuntu_proot.so",
+    "loaderLibrary": "libubuntu_proot_loader.so",
     "prorootLibrary": "libproroot.so",
     "prorootRuntimeLibrary": "libproroot-runtime.so",
     "prorootBridgeLibrary": "libproroot-bridge.so",

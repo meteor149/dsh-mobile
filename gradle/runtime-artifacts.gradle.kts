@@ -13,7 +13,7 @@ val manifestName = when (kind) {
     "engine" -> "ubuntu-engine-manifest.json"
     else -> "ubuntu-proroot-manifest.json"
 }
-val prootNames = setOf("libdsh_proot.so", "libdsh_proot_loader.so", "libandroid-shmem.so", "libdsh_talloc.so")
+val prootNames = setOf("libubuntu_proot.so", "libubuntu_proot_loader.so", "libandroid-shmem.so", "libubuntu_talloc.so")
 val prorootNames = setOf("libproroot.so", "libproroot-runtime.so", "libproroot-bridge.so", "libproroot-linker.so", "libproroot-stub-loader.so")
 
 tasks.register("prepareRuntimeAssets") {

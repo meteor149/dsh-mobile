@@ -14,10 +14,10 @@ if (!['all', 'engine', 'image', 'proroot'].includes(component)) {
 const versions = parseEnv(await readFile(path.join(projectRoot, 'runtime', 'versions.env'), 'utf8'))
 const rootfsFile = 'ubuntu-arm64.tar.zst'
 const nativeFiles = [
-  ['libdsh_proot.so', 'libdsh_proot.so'],
-  ['libdsh_proot_loader.so', 'libdsh_proot_loader.so'],
+  ['libubuntu_proot.so', 'libubuntu_proot.so'],
+  ['libubuntu_proot_loader.so', 'libubuntu_proot_loader.so'],
   ['libandroid-shmem.so', 'libandroid-shmem.so'],
-  ['libdsh_talloc.so', 'libdsh_talloc.so'],
+  ['libubuntu_talloc.so', 'libubuntu_talloc.so'],
   ['libproroot.so', 'libproroot.so', 'PROROOT_LAUNCHER_SHA256'],
   ['libproroot-runtime.so', 'libproroot-runtime.so', 'PROROOT_RUNTIME_SHA256'],
   ['libproroot-bridge.so', 'libproroot-bridge.so', 'PROROOT_BRIDGE_SHA256'],
@@ -56,8 +56,8 @@ const manifest = {
   } : undefined,
   nativeLibraries,
   entrypoint: {
-    prootLibrary: 'libdsh_proot.so',
-    loaderLibrary: 'libdsh_proot_loader.so',
+    prootLibrary: 'libubuntu_proot.so',
+    loaderLibrary: 'libubuntu_proot_loader.so',
     prorootLibrary: 'libproroot.so',
     prorootRuntimeLibrary: 'libproroot-runtime.so',
     prorootBridgeLibrary: 'libproroot-bridge.so',

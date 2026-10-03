@@ -10,7 +10,7 @@ const generator = path.join(import.meta.dirname, 'generate-runtime-manifest.mjs'
 test('engine manifest needs neither image nor restricted proroot binaries', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'ubuntu-engine-'))
   try {
-    for (const file of ['libdsh_proot.so', 'libdsh_proot_loader.so', 'libandroid-shmem.so', 'libdsh_talloc.so']) {
+    for (const file of ['libubuntu_proot.so', 'libubuntu_proot_loader.so', 'libandroid-shmem.so', 'libubuntu_talloc.so']) {
       await writeFile(path.join(dir, file), `fixture ${file}`)
     }
     execFileSync(process.execPath, [generator, dir, '--component', 'engine'])

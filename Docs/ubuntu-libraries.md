@@ -41,15 +41,16 @@ other apps can resolve them there. This split uses runtime `0.2.0` and image
 `24.04-1`; runtime 0.2.0 removes the old DSH-specific API.
 
 The Maven-only sample belongs to `android-ubuntu-runtime/samples/ubuntu-client`.
-Publish both libraries locally, then run `./gradlew -p samples/ubuntu-client
-assembleDebug` from the runtime project. It has no dependency on DSH Mobile.
+Run `./gradlew -p samples/ubuntu-client assembleDebug` from the runtime project.
+It resolves both libraries from Maven Central by default and has no dependency
+on DSH Mobile. For local artifacts, pass `-PubuntuRepository=...`.
 
 proroot stays in the complete app due to its binary distribution license.
 The reusable runtime supplies PRoot and supports root-managed chroot.
 
 ## 其它 app 接入
 
-在项目 repositories 中加入实际发布地址，本地验证可使用本仓库的 `build/maven-repository`。
+在项目 repositories 中配置 `google()` 和 `mavenCentral()`；本地验证可以显式配置库项目的 `build/maven-repository`。
 然后在 Android app 模块中配置：
 
 ```kotlin
@@ -63,8 +64,8 @@ android {
     packaging.jniLibs {
         useLegacyPackaging = true
         keepDebugSymbols += setOf(
-            "**/libdsh_proot.so", "**/libdsh_proot_loader.so",
-            "**/libandroid-shmem.so", "**/libdsh_talloc.so",
+            "**/libubuntu_proot.so", "**/libubuntu_proot_loader.so",
+            "**/libandroid-shmem.so", "**/libubuntu_talloc.so",
         )
     }
     androidResources.noCompress += "zst"
