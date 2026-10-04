@@ -235,6 +235,19 @@ class RuntimeSmokeTest {
                 """.trimIndent())
                 evaluate("[...document.querySelectorAll('[data-dsh-mobile-role=details] button')].find(b=>/^Exit fullscreen$|^退出全屏$/.test(b.getAttribute('aria-label')||'')).click()")
                 waitForPage("document.querySelector('[data-dsh-mobile-role=details]').getBoundingClientRect().left>=innerWidth")
+                suspend fun assertBackConsumed() {
+                    val before = evaluate("location.href")
+                    instrumentation.runOnMainSync { activity.onBackPressedDispatcher.onBackPressed() }
+                    delay(500)
+                    assertEquals("Back must not navigate the Web UI", before, evaluate("location.href"))
+                    instrumentation.runOnMainSync {
+                        assertTrue("Back must keep the Web UI in the foreground", activity.hasWindowFocus() && !activity.isFinishing)
+                    }
+                }
+                assertBackConsumed()
+                evaluate("history.pushState(null, '', '#back-regression')")
+                waitForPage("location.hash === '#back-regression'")
+                assertBackConsumed()
                 Log.i(TAG, "${mode.name}: authenticated HTTP 200, unauthenticated HTTP 401, WebView rendered DSH")
                 // Test each mode separately to check backgrounding on devices that block
                 // bringing an activity back to the foreground from instrumentation.

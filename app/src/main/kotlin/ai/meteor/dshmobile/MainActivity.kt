@@ -86,7 +86,6 @@ class MainActivity : ComponentActivity() {
                     RuntimeWebView(
                         url = webUrl,
                         downloads = downloads,
-                        onBackToBackground = ::sendTaskToBackground,
                     )
                 } else {
                     DshMobileApp(
@@ -117,16 +116,12 @@ class MainActivity : ComponentActivity() {
         ContextCompat.startForegroundService(this, RuntimeService.intent(this, action))
     }
 
-    private fun sendTaskToBackground() {
-        moveTaskToBack(true)
-    }
 }
 
 @androidx.compose.runtime.Composable
 private fun RuntimeWebView(
     url: String,
     downloads: DownloadViewModel,
-    onBackToBackground: () -> Unit,
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val expected = androidx.compose.runtime.remember(url) { url.toUri() }
@@ -155,7 +150,8 @@ private fun RuntimeWebView(
         }
     }
 
-    BackHandler { webView.navigateBackOr(onBackToBackground) }
+    // Consume system Back only while the Web UI is composed.
+    BackHandler { }
     androidx.compose.runtime.DisposableEffect(webView) {
         onDispose {
             downloads.detach()
@@ -170,20 +166,6 @@ private fun RuntimeWebView(
             .windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.safeDrawing)
             .imePadding(),
     )
-}
-
-private const val WEB_HISTORY_BACK_SCRIPT =
-    "(() => { if (window.navigation && window.navigation.canGoBack) { " +
-        "window.history.back(); return true; } return false; })()"
-
-private fun WebView.navigateBackOr(onNoHistory: () -> Unit) {
-    if (canGoBack()) {
-        goBack()
-        return
-    }
-    evaluateJavascript(WEB_HISTORY_BACK_SCRIPT) { handled ->
-        if (handled != "true") onNoHistory()
-    }
 }
 
 internal fun createLockedDownWebView(context: Context, expected: Uri, downloads: DownloadViewModel): WebView = WebView(context).apply {
