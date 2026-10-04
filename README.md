@@ -20,7 +20,7 @@ DSH Mobile is an unofficial Android host for
 official DSH Web UI inside an app-private Ubuntu ARM64 environment and opens it
 in the app’s WebView.
 
-This development branch uses `io.github.meteor149:ubuntu-runtime:0.3.0-SNAPSHOT`
+The Ubuntu runtime currently uses `io.github.meteor149:ubuntu-runtime:0.3.0-SNAPSHOT`
 from the Central snapshot repository for PRoot compatibility fixes. The Ubuntu
 image stays on `24.04-1`; proroot integration is owned by this app.
 
@@ -46,7 +46,9 @@ image stays on `24.04-1`; proroot integration is owned by this app.
 - Runs DSH in Ubuntu 24.04 ARM64, with checksum-verified runtime files.
 - Supports PRoot, proroot, and chroot, managed by a foreground service.
 - Adapts the Web UI for phones, with sidebar navigation, scrollable settings tabs, and an input area that stays visible above the keyboard.
-  Swipe inward from the middle of the left or right screen edge to open the corresponding sidebar.
+- Opens the native left and right sidebars with edge swipes.
+- Exports workspace files from the Web UI to Android storage, with progress and cancellation.
+- Remembers the execution mode and can launch DSH automatically when the app is reopened.
 - Keeps Ubuntu and workspace data in the app-private directory.
 - Serves the Web UI through an authenticated local gateway.
 
@@ -63,12 +65,29 @@ Development builds are available under **Artifacts** in successful
 3. Start DeepSeek Harness and open the Web UI.
 4. Configure a model provider and API key in Settings.
 
+Enable **Remember & auto-start** on the setup screen to use the selected execution mode automatically when reopening the app, including after its process has been killed.
+
 On first use, DSH creates a default workspace under `/workspace/deepseek-harness/default-workspace`, stored in the app's private data and shared across execution modes.
+
+## Gestures and navigation
+
+- Swipe right from the middle of the left screen edge to open the left sidebar.
+- Swipe left from the middle of the right screen edge to open the native right sidebar, where you can browse workspace files or open a terminal.
+- Tap the shaded area outside the left sidebar to close it. Use the right sidebar's own toolbar controls to close it.
+
+These gestures start within the edge area; swipes in the middle of the page and vertical scrolling do not open a sidebar.
 
 System Back keeps the Web UI open without navigating away. The runtime continues until stopped from the notification.
 
-To export a file, click its download button in the Web UI, then choose a destination
-in Android’s **Save to** dialog. Files can be saved to Downloads or another document provider.
+## Save workspace files to your phone
+
+Files created by DSH stay in the app's Ubuntu workspace until you export them.
+
+1. Click the file's download button in the Web UI.
+2. Choose **Downloads**, another folder, or a document provider in Android's **Save to** dialog, then confirm the filename and save.
+3. Follow the transfer progress in the app. You can cancel an active transfer.
+
+After saving, open the exported file with Android's file manager or another app.
 
 ## Execution modes
 
@@ -91,7 +110,7 @@ chroot runs Ubuntu as root; use it only on a trusted device.
 
 Requires JDK 21 and Android SDK 36. Building the runtime also requires Node.js,
 Docker with BuildKit, and ARM64 emulation (QEMU); see [runtime build details](runtime/README.md).
-Ubuntu libraries are downloaded from Maven Central by default.
+The Ubuntu image is downloaded from Maven Central; the runtime currently uses the Central snapshot repository.
 
 ```bash
 ./gradlew buildRuntime

@@ -17,7 +17,7 @@
 
 DSH Mobile 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的非官方 Android 应用，在应用私有的 Ubuntu ARM64 环境中运行 DSH，并通过内置 WebView 显示界面。
 
-本开发分支通过 Central snapshot 仓库接入 `io.github.meteor149:ubuntu-runtime:0.3.0-SNAPSHOT`，临时修复 PRoot 的兼容问题。Ubuntu 镜像仍使用 `24.04-1`，proroot 的接入由本应用负责。
+Ubuntu 运行库当前通过 Central snapshot 仓库接入 `io.github.meteor149:ubuntu-runtime:0.3.0-SNAPSHOT`，临时修复 PRoot 的兼容问题。Ubuntu 镜像仍使用 `24.04-1`，proroot 的接入由本应用负责。
 
 ## 应用效果
 
@@ -41,7 +41,9 @@ DSH Mobile 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harnes
 - 在 Ubuntu 24.04 ARM64 中运行 DSH，并校验运行时文件的完整性。
 - 支持 PRoot、proroot 和 chroot，由前台服务管理本地运行时。
 - 适配手机屏幕，提供侧边栏导航、可横向滚动的设置分类和不被软键盘遮挡的输入区。
-  从屏幕左、右边缘中部向内滑动，可打开对应的侧边栏。
+- 支持边缘手势，呼出 Web UI 自带的左右侧栏。
+- 支持将 Web UI 中的工作区文件下载到手机，提供传输进度和取消操作。
+- 支持记住运行方式，在重新打开应用时自动启动 DSH。
 - Ubuntu 和工作区数据保存在应用私有目录。
 - 通过带身份验证的本地网关访问 Web UI。
 
@@ -57,11 +59,29 @@ DSH Mobile 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harnes
 3. 启动 DeepSeek Harness，打开 Web UI。
 4. 在设置中配置模型服务商和 API 密钥。
 
+在引导界面启用**记住并自动启动**后，重新打开应用时会使用选定的运行方式自动启动 DSH，应用进程被结束后再次打开也会生效。
+
 首次使用时，DSH 会在 `/workspace/deepseek-harness/default-workspace` 创建默认工作区，文件保存在应用私有数据中，并在各运行方式之间共享。
+
+## 手势与导航
+
+- 从屏幕左边缘中部向右滑动，打开左侧栏。
+- 从屏幕右边缘中部向左滑动，打开新版自带的右侧栏，可浏览工作区文件或打开终端。
+- 点击左侧栏外的阴影区域可关闭左侧栏；右侧栏使用其自带的工具栏控件关闭。
+
+手势需要从屏幕边缘开始。页面中部的横向滑动和纵向滚动不会呼出侧栏。
 
 Web UI 会消费系统返回操作，保持当前页面和前台状态。运行时可通过通知停止。
 
-点击 Web UI 中的下载按钮后，在 Android 系统“保存到”界面选择位置，即可把文件导出到手机的下载目录或其他文档存储位置。
+## 将工作区文件保存到手机
+
+DSH 生成的文件保存在应用的 Ubuntu 工作区中，可通过 Web UI 导出到手机使用。
+
+1. 点击 Web UI 中文件的下载按钮。
+2. 在 Android 系统“保存到”界面选择**下载目录**、其他文件夹或文档存储服务，确认文件名后保存。
+3. 在应用中查看传输进度；传输过程中可以取消。
+
+保存后，可通过手机文件管理器或其他应用打开导出的文件。
 
 ## 运行方式
 
@@ -81,7 +101,7 @@ chroot 以 Root 身份运行 Ubuntu，请仅在可信设备上使用。
 ## 构建
 
 需要 JDK 21 和 Android SDK 36。构建运行时还需要 Node.js、启用 BuildKit 的 Docker 和 ARM64 模拟支持（QEMU），详见[运行时构建说明](../runtime/README.md)。
-Ubuntu 库默认从 Maven Central 下载。
+Ubuntu 镜像从 Maven Central 下载，运行库当前使用 Central snapshot 仓库。
 
 ```bash
 ./gradlew buildRuntime
