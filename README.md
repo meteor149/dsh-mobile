@@ -49,6 +49,7 @@ image stays on `24.04-1`; proroot integration is owned by this app.
 - Runs DSH in Ubuntu 24.04 ARM64, with checksum-verified runtime files.
 - Supports PRoot, proroot, and chroot, managed by a foreground service.
 - Adapts the Web UI for phones, with sidebar navigation, scrollable settings tabs, and an input area that stays visible above the keyboard.
+  Swipe inward from the middle of the left or right screen edge to open the corresponding sidebar.
 - Keeps Ubuntu and workspace data in the app-private directory.
 - Serves the Web UI through an authenticated local gateway.
 

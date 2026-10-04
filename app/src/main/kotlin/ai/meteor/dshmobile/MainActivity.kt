@@ -2,7 +2,9 @@ package ai.meteor.dshmobile
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Rect
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.ViewGroup
 import android.webkit.CookieManager
@@ -134,6 +136,21 @@ private fun RuntimeWebView(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT,
             )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                addOnLayoutChangeListener { view, _, _, _, _, _, _, _, _ ->
+                    val density = resources.displayMetrics.density
+                    // Reserve the middle of each edge for drawers; Android keeps
+                    // its back gesture available along the rest of the edge.
+                    val halfHeight = (100 * density).toInt()
+                    val edgeWidth = (24 * density).toInt()
+                    val top = (view.height / 2 - halfHeight).coerceAtLeast(0)
+                    val bottom = (view.height / 2 + halfHeight).coerceAtMost(view.height)
+                    view.systemGestureExclusionRects = if (view.width / density < 768) listOf(
+                        Rect(0, top, edgeWidth, bottom),
+                        Rect(view.width - edgeWidth, top, view.width, bottom),
+                    ) else emptyList()
+                }
+            }
             doOnLayout { loadUrl(url) }
         }
     }

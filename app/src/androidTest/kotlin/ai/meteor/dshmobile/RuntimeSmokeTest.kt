@@ -2,7 +2,10 @@ package ai.meteor.dshmobile
 
 import android.app.KeyguardManager
 import android.content.Intent
+import android.os.SystemClock
 import android.util.Log
+import android.view.InputDevice
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
@@ -151,18 +154,46 @@ class RuntimeSmokeTest {
                         throw AssertionError("WebView condition failed: $script", error)
                     }
                 }
+                fun swipe(from: Float, to: Float, vertical: Float = 0f) {
+                    val bounds = FloatArray(4)
+                    lateinit var touchView: WebView
+                    instrumentation.runOnMainSync {
+                        val view = requireNotNull(findWebView(activity.window.decorView))
+                        touchView = view
+                        bounds[2] = view.width.toFloat()
+                        bounds[3] = view.height.toFloat()
+                    }
+                    val down = SystemClock.uptimeMillis()
+                    for (step in 0..6) {
+                        val fraction = step / 6f
+                        val event = MotionEvent.obtain(down, SystemClock.uptimeMillis(),
+                            when (step) { 0 -> MotionEvent.ACTION_DOWN; 6 -> MotionEvent.ACTION_UP; else -> MotionEvent.ACTION_MOVE },
+                            bounds[0] + bounds[2] * (from + (to - from) * fraction),
+                            bounds[1] + bounds[3] * (0.5f + vertical * fraction), 0)
+                        event.source = InputDevice.SOURCE_TOUCHSCREEN
+                        // Dispatch into the actual WebView touch pipeline; OEMs
+                        // may deny instrumentation permission to inject OS input.
+                        try { instrumentation.runOnMainSync { touchView.dispatchTouchEvent(event) } }
+                        finally { event.recycle() }
+                        SystemClock.sleep(40)
+                    }
+                }
                 // A real hit test matters: button.click() alone bypasses blocking layers.
-                waitForPage("[...document.querySelectorAll('[role=dialog] button')].some(b=>/^(继续|Continue)$|稍后配置|skip|later/i.test(b.textContent.trim()))")
-                evaluate("""
-                    [...document.querySelectorAll('[role="dialog"] button')]
-                      .find(b=>/^(继续|Continue)$/i.test(b.textContent.trim()))?.click();
+                waitForPage("!!document.querySelector('[data-dsh-mobile-frame]') && !document.querySelector('[data-dsh-boot]')")
+                delay(500)
+                val preview = evaluate("""
+                    (()=>{const b=[...document.querySelectorAll('[role="dialog"] button')]
+                      .find(b=>/^(继续|Continue)$/i.test(b.textContent.trim()));
+                      if(!b)return false;b.click();return true})()
                 """.trimIndent())
-                // The API-key dialog mounts after the preview dialog unmounts.
-                waitForPage("[...document.querySelectorAll('[role=dialog] button')].some(b=>/稍后配置|skip|later/i.test(b.textContent))")
-                evaluate("""
-                    [...document.querySelectorAll('[role="dialog"] button')]
-                      .find(b=>/稍后配置|skip|later/i.test(b.textContent))?.click();
-                """.trimIndent())
+                // Subsequent launches may have already completed onboarding.
+                if (preview == "true" || evaluate("!!document.querySelector('[role=dialog]')") == "true") {
+                    waitForPage("[...document.querySelectorAll('[role=dialog] button')].some(b=>/稍后配置|skip|later/i.test(b.textContent))")
+                    evaluate("""
+                        [...document.querySelectorAll('[role="dialog"] button')]
+                          .find(b=>/稍后配置|skip|later/i.test(b.textContent))?.click();
+                    """.trimIndent())
+                }
                 waitForPage("!document.querySelector('[role=dialog]')")
                 // Restore the closed drawer if a previous run saved fullscreen mode.
                 evaluate("""
@@ -171,11 +202,16 @@ class RuntimeSmokeTest {
                         .find(b=>/^Exit fullscreen$|^退出全屏$/.test(b.getAttribute('aria-label')||''))?.click();
                 """.trimIndent())
                 waitForPage("""
-                    (()=>{const b=document.querySelector('[data-dsh-mobile-ui-menu]');
-                    if(!b||b.hidden)return false;const r=b.getBoundingClientRect();
+                    (()=>{const b=[...document.querySelectorAll('button')]
+                    .find(b=>/^(Select workspace|选择工作区)$/.test(b.getAttribute('aria-label')||''));
+                    if(!b)return false;const r=b.getBoundingClientRect();
                     return r.width>0&&b.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))})()
                 """.trimIndent())
-                evaluate("document.querySelector('[data-dsh-mobile-ui-menu]').click()")
+                assertEquals("No injected drawer button", "true", evaluate("!document.querySelector('[data-dsh-mobile-ui-menu]')"))
+                swipe(0.5f, 0.2f)
+                swipe(0.03f, 0.03f, 0.2f)
+                assertEquals("Scrolling and central swipes must leave drawers closed", "true", evaluate("document.querySelector('[data-dsh-mobile-frame]').hasAttribute('data-sidebar-collapsed') && document.querySelector('[data-dsh-mobile-role=details]').getBoundingClientRect().left>=innerWidth"))
+                swipe(0.03f, 0.32f)
                 waitForPage("!document.querySelector('[data-dsh-mobile-frame]').hasAttribute('data-sidebar-collapsed')")
                 waitForPage("""
                     (()=>{const b=[...document.querySelectorAll('[data-dsh-mobile-role=sidebar] button')]
@@ -189,7 +225,7 @@ class RuntimeSmokeTest {
                 waitForPage("!document.querySelector('[data-dsh-mobile-settings]')")
                 evaluate("document.querySelector('[data-dsh-mobile-ui-scrim]').click()")
                 waitForPage("document.querySelector('[data-dsh-mobile-frame]').hasAttribute('data-sidebar-collapsed')")
-                evaluate("[...document.querySelectorAll('button')].find(b=>/^Open right sidebar$|^打开右侧边栏$/.test(b.getAttribute('aria-label')||'')).click()")
+                swipe(0.97f, 0.68f)
                 waitForPage("document.querySelector('[data-dsh-mobile-role=details]').getBoundingClientRect().left < innerWidth / 2")
                 waitForPage("""
                     (()=>{const b=[...document.querySelectorAll('[data-dsh-mobile-role=details] button')]

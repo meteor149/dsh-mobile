@@ -44,6 +44,7 @@ DSH Mobile 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harnes
 - 在 Ubuntu 24.04 ARM64 中运行 DSH，并校验运行时文件的完整性。
 - 支持 PRoot、proroot 和 chroot，由前台服务管理本地运行时。
 - 适配手机屏幕，提供侧边栏导航、可横向滚动的设置分类和不被软键盘遮挡的输入区。
+  从屏幕左、右边缘中部向内滑动，可打开对应的侧边栏。
 - Ubuntu 和工作区数据保存在应用私有目录。
 - 通过带身份验证的本地网关访问 Web UI。
 

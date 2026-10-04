@@ -29,16 +29,6 @@
     }) ?? null
   }
 
-  const nativeHeaderToggleVisible = () => {
-    const sidebar = sidebarColumn()
-    return [...document.querySelectorAll('button[aria-label]:not([data-dsh-mobile-ui-menu])')].some(button => {
-      if (sidebar?.contains(button)) return false
-      const label = button.getAttribute('aria-label') ?? ''
-      if (/right.*sidebar|右.*侧边栏/iu.test(label)) return false
-      return /sidebar|侧边栏/iu.test(label) && button.getClientRects().length > 0
-    })
-  }
-
   const toggleSidebar = open => {
     if (frame === null) return
     const isOpen = !frame.hasAttribute('data-sidebar-collapsed')
@@ -48,23 +38,23 @@
       toggle.click()
       return
     }
-    frame.toggleAttribute('data-sidebar-collapsed', !open)
-    scheduleSync()
+  }
+
+  const rightbarOpen = () => frame !== null && (
+    frame.hasAttribute('data-rightbar-fullscreen') ||
+    (!frame.hasAttribute('data-rightbar-collapsed') && !frame.hasAttribute('data-details-collapsed'))
+  )
+
+  const openRightbar = () => {
+    if (frame === null || rightbarOpen()) return
+    const toggle = [...frame.querySelectorAll('button[aria-label]')].find(button =>
+      /^(Open right sidebar|打开右侧边栏)$/iu.test(button.getAttribute('aria-label') ?? ''),
+    )
+    toggle?.click()
   }
 
   const ensureControls = () => {
     if (document.body === null) return
-    let menu = document.querySelector('[data-dsh-mobile-ui-menu]')
-    if (menu === null) {
-      menu = document.createElement('button')
-      menu.type = 'button'
-      menu.setAttribute('data-dsh-mobile-ui-menu', '')
-      menu.setAttribute('aria-label', document.documentElement.lang.startsWith('zh') ? '打开侧边栏' : 'Open sidebar')
-      menu.innerHTML = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="3" width="15" height="14" rx="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M7 3.75v12.5" stroke="currentColor" stroke-width="1.5"/></svg>'
-      menu.addEventListener('click', () => toggleSidebar(true))
-      document.body.append(menu)
-    }
-
     let scrim = document.querySelector('[data-dsh-mobile-ui-scrim]')
     if (scrim === null) {
       scrim = document.createElement('button')
@@ -184,24 +174,9 @@
 
   const syncControls = () => {
     ensureControls()
-    const menu = document.querySelector('[data-dsh-mobile-ui-menu]')
     const scrim = document.querySelector('[data-dsh-mobile-ui-scrim]')
     const mobile = media.matches
     const sidebarOpen = frame !== null && !frame.hasAttribute('data-sidebar-collapsed')
-    if (menu !== null) {
-      const center = frame?.querySelector(':scope > [data-dsh-mobile-role="center"]') ?? null
-      const titleRow = center?.querySelector('[data-phase] > header:not([aria-hidden="true"])')?.firstElementChild ?? null
-      if (mobile && titleRow !== null) {
-        titleRow.setAttribute('data-dsh-mobile-title-row', '')
-        if (menu.parentElement !== titleRow || menu !== titleRow.lastElementChild) titleRow.append(menu)
-        menu.setAttribute('data-dsh-mobile-ui-menu-inline', '')
-      } else {
-        if (menu.parentElement !== document.body) document.body.append(menu)
-        menu.removeAttribute('data-dsh-mobile-ui-menu-inline')
-      }
-      const shouldHideMenu = !mobile || sidebarOpen || nativeHeaderToggleVisible()
-      if (menu.hidden !== shouldHideMenu) menu.hidden = shouldHideMenu
-    }
     if (scrim !== null) scrim.hidden = !mobile || !sidebarOpen
   }
 
@@ -215,28 +190,36 @@
 
   const onTouchStart = event => {
     const touch = event.touches[0]
-    swipeStart = touch !== undefined &&
-      event.touches.length === 1 &&
-      media.matches &&
-      frame?.hasAttribute('data-sidebar-collapsed') &&
-      touch.clientX <= 24
-      ? { x: touch.clientX, y: touch.clientY }
-      : null
+    swipeStart = null
+    if (!touch || event.touches.length !== 1 || !media.matches || frame === null ||
+        !frame.hasAttribute('data-sidebar-collapsed') || rightbarOpen() ||
+        document.querySelector('[role="dialog"], [aria-modal="true"]')) return
+    const edge = touch.clientX <= 24 ? 'left' :
+      touch.clientX >= window.innerWidth - 24 ? 'right' : null
+    if (edge !== null) swipeStart = { edge, x: touch.clientX, y: touch.clientY, id: touch.identifier }
   }
 
   const onTouchMove = event => {
-    if (swipeStart === null || event.touches.length !== 1) return
-    const touch = event.touches[0]
-    if (touch === undefined) return
-    const deltaX = touch.clientX - swipeStart.x
-    const deltaY = Math.abs(touch.clientY - swipeStart.y)
-    if (deltaX < 0 || deltaY > 32) {
+    if (swipeStart === null) return
+    if (event.touches.length !== 1) {
       swipeStart = null
       return
     }
-    if (deltaX >= 56) {
+    const touch = event.touches[0]
+    if (touch === undefined || touch.identifier !== swipeStart.id) return
+    const deltaX = (touch.clientX - swipeStart.x) * (swipeStart.edge === 'left' ? 1 : -1)
+    const deltaY = Math.abs(touch.clientY - swipeStart.y)
+    if (deltaX < -8 || deltaY > 32) {
       swipeStart = null
-      toggleSidebar(true)
+      return
+    }
+    if (deltaX >= 16 && deltaX > deltaY * 1.5 && event.cancelable) event.preventDefault()
+    if (deltaX >= 56 && deltaX > deltaY * 1.5) {
+      const edge = swipeStart.edge
+      swipeStart = null
+      if (event.cancelable) event.preventDefault()
+      if (edge === 'left') toggleSidebar(true)
+      else openRightbar()
     }
   }
 
@@ -269,7 +252,7 @@
     media.addEventListener('change', scheduleSync)
     document.addEventListener('click', onSidebarClick, true)
     window.addEventListener('touchstart', onTouchStart, { passive: true })
-    window.addEventListener('touchmove', onTouchMove, { passive: true })
+    window.addEventListener('touchmove', onTouchMove, { passive: false })
     window.addEventListener('touchend', () => { swipeStart = null }, { passive: true })
     window.addEventListener('touchcancel', () => { swipeStart = null }, { passive: true })
     sync()
