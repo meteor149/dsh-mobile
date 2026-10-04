@@ -25,7 +25,8 @@ class DshInstaller(context: Context) {
         context, artifacts, directoryName = "dsh-packages",
         openArchive = { manifest -> context.assets.open("dsh/${requireNotNull(manifest.rootfs).file}") },
         requiredPaths = listOf("opt/node/bin/node", "opt/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js",
-            "opt/dsh-mobile/gateway.mjs", "opt/dsh-mobile/bin/dsh-mobile-gateway"),
+            "opt/dsh-mobile/gateway.mjs", "opt/dsh-mobile/android.patch.yml", "opt/dsh-mobile/bin/dsh-mobile-gateway",
+            "opt/dsh-mobile/compat/file-publication.mjs", "opt/dsh-mobile/compat/file-publication.py"),
     )
 
     fun readManifest(): DshPayloadManifest = context.assets.open("dsh/dsh-manifest.json")
@@ -44,17 +45,29 @@ class DshInstaller(context: Context) {
     suspend fun install(onProgress: (Float, RuntimeMessage) -> Unit = { _, _ -> }): InstalledRuntime =
         installer.install(runtimeManifest(), onProgress)
 
-    fun command(payload: InstalledRuntime, token: String): UbuntuCommand {
+    fun command(payload: InstalledRuntime, token: String, mode: RuntimeMode = RuntimeMode.Proot): UbuntuCommand {
         val home = context.filesDir.toPath().resolve("linux-data/dsh-home")
         Files.createDirectories(home)
+        // proroot's scandir translates a guest name to a host path before glibc
+        // performs another intercepted open. Keep those host paths stable through
+        // the second translation, including the Ubuntu tree and all app binds.
+        val hostAliases = if (mode == RuntimeMode.Proroot) {
+            listOf(context.filesDir.toPath(), context.cacheDir.toPath())
+                .associate { directory -> directory.toString() to directory }
+        } else emptyMap()
         return UbuntuCommand(
             arguments = listOf("/opt/dsh-mobile/bin/dsh-mobile-gateway"),
             environment = mapOf("DSH_HOME" to "/dsh-home", "DSH_MOBILE_TOKEN" to token,
                 "DSH_PERMISSION_MODE" to "danger-full-access",
+                // PRoot's simulated hard links in the shared cache resolve to non-.node
+                // filenames under proroot, causing Node to parse native binaries as JS.
+                // Load the checksum-verified packaged binaries directly instead.
+                "NARB_DISABLE_NATIVE_CACHE" to "1",
+                "DSH_MOBILE_RUNTIME_MODE" to mode.name.lowercase(),
                 "PATH" to "/opt/dsh-mobile/bin:/opt/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"),
             bindings = mapOf("/opt/node" to payload.rootfs.resolve("opt/node"),
                 "/opt/dsh" to payload.rootfs.resolve("opt/dsh"),
-                "/opt/dsh-mobile" to payload.rootfs.resolve("opt/dsh-mobile"), "/dsh-home" to home),
+                "/opt/dsh-mobile" to payload.rootfs.resolve("opt/dsh-mobile"), "/dsh-home" to home) + hostAliases,
         )
     }
 }

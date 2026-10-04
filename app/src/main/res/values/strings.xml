@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="download_saving">Saving file</string>
+    <string name="download_cancel">Cancel</string>
+    <string name="download_saved">File saved</string>
+    <string name="download_failed">Could not save file: %1$s</string>
+    <string name="download_busy">Finish or cancel the current download first.</string>
+    <string name="download_invalid_source">This download is not from the local workspace.</string>
     <string name="app_name">DSH Mobile</string>
     <string name="foreground_service_subtype" translatable="false">Runs the app-private Ubuntu and DeepSeek Harness process tree while the user is coding.</string>
     <string name="notification_installing">Installing runtime</string>

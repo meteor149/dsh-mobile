@@ -4,6 +4,7 @@ import { readFileSync, openSync, closeSync } from 'node:fs'
 import http from 'node:http'
 import net from 'node:net'
 import { createInterface } from 'node:readline'
+import { fileURLToPath } from 'node:url'
 
 const LOOPBACK = '127.0.0.1'
 const COOKIE_NAME = 'dsh_mobile_session'
@@ -20,9 +21,10 @@ if (typeof token !== 'string' || token.length < 32) {
 
 const { DSH_MOBILE_TOKEN: _discardedToken, ...backendEnvironment } = process.env
 const backendCommand = configuredNodeBinary ?? '/usr/local/bin/dsh'
+const androidPatch = fileURLToPath(new URL('./android.patch.yml', import.meta.url))
 const backendArguments = configuredNodeBinary
-  ? ['--expose-internals', dshCliPath, 'web', '--host', LOOPBACK, '--port', '0']
-  : ['web', '--host', LOOPBACK, '--port', '0']
+  ? ['--expose-internals', dshCliPath, 'web', '--patch', androidPatch, '--host', LOOPBACK, '--port', '0', '--no-open']
+  : ['web', '--patch', androidPatch, '--host', LOOPBACK, '--port', '0', '--no-open']
 const backendInput = openSync(process.env.DSH_MOBILE_STDIN_FILE ?? '/etc/os-release', 'r')
 const backend = externalBackendPort === undefined
   ? spawn(
@@ -37,6 +39,7 @@ const backend = externalBackendPort === undefined
 closeSync(backendInput)
 
 let backendPort = externalBackendPort
+let backendCookie
 let backendReadyResolve
 let backendReadyReject
 const backendReady = new Promise((resolve, reject) => {
@@ -51,11 +54,17 @@ if (externalBackendPort !== undefined) {
 const forwardLog = (stream, prefix) => {
   const lines = createInterface({ input: stream })
   lines.on('line', line => {
-    process.stdout.write(`${prefix}${line}\n`)
-    const match = /^dsh web: http:\/\/127\.0\.0\.1:(\d+)/.exec(line)
+    process.stdout.write(`${prefix}${line.replace(/([?&]token=)[^\s&#)]+/gu, '$1<redacted>')}\n`)
+    const match = /^dsh web: (http:\/\/127\.0\.0\.1:\d+[^\s]*)/u.exec(line)
     if (match && backendPort === undefined) {
-      backendPort = Number(match[1])
-      backendReadyResolve(backendPort)
+      const url = new URL(match[1])
+      backendPort = Number(url.port)
+      if (url.searchParams.has('token')) {
+        authenticateBackend(url).then(cookie => {
+          backendCookie = cookie
+          backendReadyResolve(backendPort)
+        }, backendReadyReject)
+      } else backendReadyResolve(backendPort)
     }
   })
 }
@@ -159,8 +168,26 @@ function safeEquals(left, right) {
 function backendHeaders(headers, port) {
   const rewritten = { ...headers, host: `${LOOPBACK}:${port}`, 'accept-encoding': 'identity' }
   delete rewritten.cookie
+  if (backendCookie !== undefined) rewritten.cookie = backendCookie
   if (rewritten.origin !== undefined) rewritten.origin = `http://${LOOPBACK}:${port}`
   return rewritten
+}
+
+/** Keep the upstream process token and authority-bound session inside the gateway. */
+function authenticateBackend(url) {
+  return new Promise((resolve, reject) => {
+    const request = http.get(url, response => {
+      response.resume()
+      const cookies = response.headers['set-cookie']
+      if (![302, 303].includes(response.statusCode) || !cookies?.length) {
+        reject(new Error('DSH backend session exchange failed'))
+        return
+      }
+      resolve(cookies.map(cookie => cookie.split(';', 1)[0]).join('; '))
+    })
+    request.setTimeout(15_000, () => request.destroy(new Error('DSH backend session exchange timed out')))
+    request.once('error', reject)
+  })
 }
 
 function serveMobileAsset(request, response) {

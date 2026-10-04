@@ -1,0 +1,5 @@
+# Android has a persistent workspace bind, rather than a desktop Documents folder.
+- id: workspace-controller
+  config:
+    documentsDirectory: /workspace
+    documentsLookupTimeoutMs: 10000

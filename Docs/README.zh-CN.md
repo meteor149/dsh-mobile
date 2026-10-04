@@ -17,6 +17,8 @@
 
 DSH Mobile 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的非官方 Android 应用，在应用私有的 Ubuntu ARM64 环境中运行 DSH，并通过内置 WebView 显示界面。
 
+本开发分支通过 Central snapshot 仓库接入 `io.github.meteor149:ubuntu-runtime:0.3.0-SNAPSHOT`，临时修复 PRoot 的兼容问题。Ubuntu 镜像仍使用 `24.04-1`，proroot 的接入由本应用负责。
+
 ## 应用效果
 
 <p align="center">
@@ -57,8 +59,12 @@ DSH Mobile 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harnes
 3. 启动 DeepSeek Harness，打开 Web UI。
 4. 在设置中配置模型服务商和 API 密钥。
 
+首次使用时，DSH 会在 `/workspace/deepseek-harness/default-workspace` 创建默认工作区，文件保存在应用私有数据中，并在各运行方式之间共享。
+
 在 Web UI 中按返回键，有浏览历史时返回上一页，否则将应用切换到后台。
 运行时会继续运行，直到通过应用或通知停止。
+
+点击 Web UI 中的下载按钮后，在 Android 系统“保存到”界面选择位置，即可把文件导出到手机的下载目录或其他文档存储位置。
 
 ## 运行方式
 

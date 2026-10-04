@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -23,11 +24,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import ai.meteor.dshmobile.resources.*
 import ai.meteor.ubuntu.runtime.RuntimeMessage
 import ai.meteor.ubuntu.runtime.RuntimeMessageKind
 import ai.meteor.ubuntu.runtime.RootAccessState
-import ai.meteor.ubuntu.runtime.RuntimeMode
+import ai.meteor.dsh.runtime.RuntimeMode
 import ai.meteor.dsh.runtime.RuntimePhase
 import ai.meteor.dsh.runtime.RuntimeUiState
 import org.jetbrains.compose.resources.stringResource
@@ -99,11 +102,35 @@ fun DshMobileApp(
                             }
                             PrimaryAction(state, onInstall, onStart, onOpen, onStop, onRequestRoot)
                             if (state.phase == RuntimePhase.Failed && state.logTail.isNotEmpty()) {
+                                var showErrorDetails by remember { mutableStateOf(false) }
                                 Spacer(Modifier.height(16.dp))
                                 state.logTail.takeLast(3).forEach {
                                     Text(it, color = SecondaryInk, fontFamily = FontFamily.Monospace,
                                         fontSize = 10.sp, lineHeight = 16.sp)
                                 }
+                                TextButton(onClick = { showErrorDetails = true }) {
+                                    Text(stringResource(Res.string.error_details))
+                                }
+                                if (showErrorDetails) AlertDialog(
+                                    onDismissRequest = { showErrorDetails = false },
+                                    title = { Text(stringResource(Res.string.error_details)) },
+                                    text = {
+                                        SelectionContainer {
+                                            Text(state.logTail.joinToString("\n"), fontFamily = FontFamily.Monospace,
+                                                fontSize = 11.sp, lineHeight = 17.sp,
+                                                modifier = Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState()))
+                                        }
+                                    },
+                                    confirmButton = { TextButton(onClick = { showErrorDetails = false }) {
+                                        Text(stringResource(Res.string.error_details_close))
+                                    } },
+                                    dismissButton = {
+                                        val clipboard = LocalClipboardManager.current
+                                        TextButton(onClick = { clipboard.setText(AnnotatedString(state.logTail.joinToString("\n"))) }) {
+                                            Text(stringResource(Res.string.error_details_copy))
+                                        }
+                                    },
+                                )
                             }
                         }
                     }

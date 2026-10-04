@@ -132,7 +132,7 @@ jobs:
 
       - name: Test and package
         run: |
-          node --test tools/generate-runtime-manifest.test.mjs dsh-runtime/runtime/rootfs/gateway.test.mjs dsh-runtime/tools/generate-runtime-manifest.test.mjs
+          node --test tools/web-download.test.mjs tools/generate-runtime-manifest.test.mjs dsh-runtime/runtime/rootfs/gateway.test.mjs dsh-runtime/runtime/rootfs/compat/*.test.mjs dsh-runtime/tools/generate-runtime-manifest.test.mjs
           ./gradlew :dsh-runtime:testDebugUnitTest :shared:testDebugUnitTest :app:testDebugUnitTest :app:assembleRelease
 
       - name: Verify Maven dependency resolution

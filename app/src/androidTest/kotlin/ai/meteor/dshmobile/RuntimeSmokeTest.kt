@@ -12,8 +12,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import ai.meteor.dshmobile.runtime.RuntimeService
 import ai.meteor.dsh.runtime.RuntimeManager
-import ai.meteor.ubuntu.runtime.RuntimeMode
-import ai.meteor.ubuntu.runtime.UbuntuEnvironment
+import ai.meteor.dsh.runtime.RuntimeMode
+import ai.meteor.dsh.runtime.DshEnvironment
 import ai.meteor.ubuntu.runtime.UbuntuCommand
 import ai.meteor.dsh.runtime.RuntimePhase
 import ai.meteor.dsh.runtime.RuntimeStateStore
@@ -70,7 +70,7 @@ class RuntimeSmokeTest {
             val sharedDirectory = context.cacheDir.toPath().resolve("generic-bind-test")
             Files.createDirectories(sharedDirectory)
             Files.write(sharedDirectory.resolve("input.txt"), "mounted-directory".toByteArray())
-            val generic = UbuntuEnvironment(context).execute(UbuntuCommand(
+            val generic = DshEnvironment(context).execute(UbuntuCommand(
                 arguments = listOf("/bin/bash", "-lc",
                     "test ! -e /opt/node && test ! -e /opt/dsh && ! command -v node && " +
                     "cat input.txt && printf 'mount-output' > output.txt && python3 --version"),

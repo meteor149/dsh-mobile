@@ -4,6 +4,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import net from 'node:net'
 import os from 'node:os'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { after, test } from 'node:test'
 
 const token = 'test-token-0123456789-abcdefghijklmnopqrstuvwxyz'
@@ -12,6 +13,16 @@ const mockCli = path.join(temporary, 'mock-dsh.mjs')
 await writeFile(mockCli, `
   import http from 'node:http'
   const server = http.createServer((request, response) => {
+    if (request.url === '/?token=upstream-process-token') {
+      response.writeHead(303, { location: './', 'set-cookie': 'dsh_backend=session; HttpOnly; Path=/' })
+      response.end()
+      return
+    }
+    if (request.headers.cookie !== 'dsh_backend=session') {
+      response.writeHead(401)
+      response.end('Backend authentication required')
+      return
+    }
     if (request.url === '/') {
       const body = '<!doctype html><html><head><meta name="viewport" content="width=1024"></head><body><div id="root"></div></body></html>'
       response.writeHead(200, {
@@ -25,11 +36,15 @@ await writeFile(mockCli, `
     response.writeHead(200, { 'content-type': 'application/json' })
     response.end(JSON.stringify({ path: request.url, cookie: request.headers.cookie ?? null, args: process.argv.slice(2) }))
   })
-  server.on('upgrade', (_request, socket) => {
+  server.on('upgrade', (request, socket) => {
+    if (request.headers.cookie !== 'dsh_backend=session') {
+      socket.end('HTTP/1.1 401 Unauthorized\\r\\n\\r\\n')
+      return
+    }
     socket.write('HTTP/1.1 101 Switching Protocols\\r\\nUpgrade: websocket\\r\\nConnection: Upgrade\\r\\n\\r\\n')
   })
   server.listen(0, '127.0.0.1', () => {
-    console.log('dsh web: http://127.0.0.1:' + server.address().port)
+    console.log('dsh web: http://127.0.0.1:' + server.address().port + '/?token=upstream-process-token')
   })
   process.on('SIGTERM', () => server.close(() => process.exit(0)))
 `)
@@ -44,11 +59,13 @@ const gateway = spawn(process.execPath, [path.join(import.meta.dirname, 'gateway
   },
   stdio: ['ignore', 'pipe', 'pipe'],
 })
+let gatewayOutput = ''
 const gatewayPort = await new Promise((resolve, reject) => {
   let output = ''
   const timeout = setTimeout(() => reject(new Error(`gateway readiness timeout: ${output}`)), 10_000)
   gateway.stdout.on('data', chunk => {
     output += chunk.toString()
+    gatewayOutput += chunk.toString()
     const match = /dsh-mobile gateway: http:\/\/127\.0\.0\.1:(\d+)/.exec(output)
     if (match) {
       clearTimeout(timeout)
@@ -57,6 +74,11 @@ const gatewayPort = await new Promise((resolve, reject) => {
   })
   gateway.once('error', reject)
   gateway.once('exit', code => reject(new Error(`gateway exited early: ${code}`)))
+})
+
+test('keeps backend launch credentials out of forwarded logs', () => {
+  assert.ok(!gatewayOutput.includes('upstream-process-token'))
+  assert.match(gatewayOutput, /token=<redacted>/u)
 })
 
 after(async () => {
@@ -111,13 +133,16 @@ test('requires a launch token and exchanges it for an HttpOnly cookie', async ()
   assert.equal(proxied.status, 200)
   assert.deepEqual(await proxied.json(), {
     path: '/api/probe',
-    cookie: null,
+    cookie: 'dsh_backend=session',
     args: [
       'web',
+      '--patch',
+      fileURLToPath(new URL('./android.patch.yml', import.meta.url)),
       '--host',
       '127.0.0.1',
       '--port',
       '0',
+      '--no-open',
     ],
   })
 })

@@ -89,4 +89,7 @@
     <string name="detail_stopping">Stopping all child processes.</string>
     <string name="detail_stopped">The runtime has stopped. Ubuntu data remains in the app-private directory.</string>
     <string name="detail_failed">The runtime operation failed. Check the runtime log and try again.</string>
+    <string name="error_details">Error details</string>
+    <string name="error_details_close">Close</string>
+    <string name="error_details_copy">Copy log</string>
 </resources>

@@ -11,6 +11,11 @@ val ubuntuSources = file(providers.environmentVariable("UBUNTU_SOURCE_DIR").getO
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
+        maven {
+            url = uri("https://central.sonatype.com/repository/maven-snapshots/")
+            content { includeModule("io.github.meteor149", "ubuntu-runtime") }
+            mavenContent { snapshotsOnly() }
+        }
         if (providers.gradleProperty("USE_LOCAL_UBUNTU_MAVEN").getOrElse("false").toBoolean()) {
             maven { url = uri(ubuntuSources.resolve("android-ubuntu-runtime/build/maven-repository")) }
             maven { url = uri(ubuntuSources.resolve("android-ubuntu-image/build/maven-repository")) }

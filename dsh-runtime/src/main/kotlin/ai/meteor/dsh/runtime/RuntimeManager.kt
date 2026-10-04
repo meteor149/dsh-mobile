@@ -48,7 +48,7 @@ class RuntimeManager private constructor(context: Context) {
     private val installer = RootfsInstaller(context, artifacts)
     private val dshInstaller = DshInstaller(context)
     private val rootAccess = RootAccessController()
-    private val supervisor = UbuntuProcessSupervisor(context, rootAccess)
+    private val supervisor = DshProcessSupervisor(context, rootAccess)
     private val operationMutex = Mutex()
     private val preferences = appContext.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
     private var sessionMode = if (preferences.getBoolean(PREFERENCE_REMEMBER_MODE, false)) {
@@ -218,7 +218,7 @@ class RuntimeManager private constructor(context: Context) {
                 supervisor.start(
                     runtime = installed,
                     mode = mode,
-                    command = dshInstaller.command(payload, token),
+                    command = dshInstaller.command(payload, token, mode),
                     onLog = { line ->
                         RuntimeStateStore.appendLog(line)
                         Regex("dsh-mobile gateway: http://127\\.0\\.0\\.1:(\\d+)")

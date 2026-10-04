@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="download_saving">正在保存文件</string>
+    <string name="download_cancel">取消</string>
+    <string name="download_saved">文件已保存</string>
+    <string name="download_failed">保存失败：%1$s</string>
+    <string name="download_busy">请先完成或取消当前下载。</string>
+    <string name="download_invalid_source">该下载不来自本地工作区。</string>
     <string name="app_name">DSH Mobile</string>
     <string name="notification_installing">正在安装运行时</string>
     <string name="notification_starting">运行时正在启动</string>

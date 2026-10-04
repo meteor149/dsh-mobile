@@ -20,6 +20,10 @@ DSH Mobile is an unofficial Android host for
 official DSH Web UI inside an app-private Ubuntu ARM64 environment and opens it
 in the app’s WebView.
 
+This development branch uses `io.github.meteor149:ubuntu-runtime:0.3.0-SNAPSHOT`
+from the Central snapshot repository for PRoot compatibility fixes. The Ubuntu
+image stays on `24.04-1`; proroot integration is owned by this app.
+
 ## App preview
 
 <p align="center">
@@ -61,8 +65,13 @@ Development builds are available under **Artifacts** in successful
 3. Start DeepSeek Harness and open the Web UI.
 4. Configure a model provider and API key in Settings.
 
+On first use, DSH creates a default workspace under `/workspace/deepseek-harness/default-workspace`, stored in the app's private data and shared across execution modes.
+
 Back navigates within the Web UI when history is available; otherwise it sends
 the app to the background. The runtime continues until stopped from the app or notification.
+
+To export a file, click its download button in the Web UI, then choose a destination
+in Android’s **Save to** dialog. Files can be saved to Downloads or another document provider.
 
 ## Execution modes
 
