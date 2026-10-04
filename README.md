@@ -27,22 +27,19 @@ image stays on `24.04-1`; proroot integration is owned by this app.
 ## App preview
 
 <p align="center">
-  <img src="Docs/assets/dsh-setup.png" alt="Ubuntu setup with execution mode selection and automatic launch option" width="280" />
+  <img src="Docs/assets/dsh-setup.png" alt="Install the Ubuntu environment" width="260" />
+  <img src="Docs/assets/dsh-web-ui.png" alt="Web UI home" width="260" />
+  <img src="Docs/assets/dsh-settings.png" alt="General settings" width="260" />
 </p>
 
-<p align="center">Ubuntu setup, execution mode selection, and automatic launch.</p>
+<p align="center">Ubuntu setup · Home · General settings</p>
 
 <p align="center">
-  <img src="Docs/assets/dsh-web-ui.png" alt="Home" width="280" />
-  <img src="Docs/assets/dsh-sidebar.png" alt="Sidebar" width="280" />
+  <img src="Docs/assets/dsh-sidebar.png" alt="Left sidebar" width="260" />
+  <img src="Docs/assets/dsh-right-sidebar.png" alt="Right sidebar with workspace files" width="260" />
 </p>
 
-<p align="center">
-  <img src="Docs/assets/dsh-settings.png" alt="General settings" width="280" />
-  <img src="Docs/assets/dsh-models.png" alt="Model settings" width="280" />
-</p>
-
-<p align="center">English Web UI on an ARM64 Android device: home, sidebar, general settings, and model settings.</p>
+<p align="center">Left sidebar · Right sidebar with workspace files</p>
 
 ## Features
 
@@ -68,8 +65,7 @@ Development builds are available under **Artifacts** in successful
 
 On first use, DSH creates a default workspace under `/workspace/deepseek-harness/default-workspace`, stored in the app's private data and shared across execution modes.
 
-Back navigates within the Web UI when history is available; otherwise it sends
-the app to the background. The runtime continues until stopped from the app or notification.
+System Back keeps the Web UI open without navigating away. The runtime continues until stopped from the notification.
 
 To export a file, click its download button in the Web UI, then choose a destination
 in Android’s **Save to** dialog. Files can be saved to Downloads or another document provider.

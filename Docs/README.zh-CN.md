@@ -22,22 +22,19 @@ DSH Mobile 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harnes
 ## 应用效果
 
 <p align="center">
-  <img src="assets/dsh-setup.png" alt="Ubuntu 引导界面、运行方式选择和自动启动选项" width="280" />
+  <img src="assets/dsh-setup.png" alt="Ubuntu 环境安装界面" width="260" />
+  <img src="assets/dsh-web-ui.png" alt="Web UI 首页" width="260" />
+  <img src="assets/dsh-settings.png" alt="通用设置" width="260" />
 </p>
 
-<p align="center">Ubuntu 引导界面：运行方式选择与自动启动选项。</p>
+<p align="center">Ubuntu 安装 · 首页 · 通用设置（英文界面）</p>
 
 <p align="center">
-  <img src="assets/dsh-web-ui.png" alt="首页" width="280" />
-  <img src="assets/dsh-sidebar.png" alt="侧边栏" width="280" />
+  <img src="assets/dsh-sidebar.png" alt="左侧栏" width="260" />
+  <img src="assets/dsh-right-sidebar.png" alt="右侧栏工作区文件浏览器" width="260" />
 </p>
 
-<p align="center">
-  <img src="assets/dsh-settings.png" alt="通用设置" width="280" />
-  <img src="assets/dsh-models.png" alt="模型设置" width="280" />
-</p>
-
-<p align="center">ARM64 Android 真机上的英文界面：首页、侧边栏、通用设置和模型设置。</p>
+<p align="center">左侧栏 · 右侧栏工作区文件浏览器（英文界面）</p>
 
 ## 功能
 
@@ -62,8 +59,7 @@ DSH Mobile 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harnes
 
 首次使用时，DSH 会在 `/workspace/deepseek-harness/default-workspace` 创建默认工作区，文件保存在应用私有数据中，并在各运行方式之间共享。
 
-在 Web UI 中按返回键，有浏览历史时返回上一页，否则将应用切换到后台。
-运行时会继续运行，直到通过应用或通知停止。
+Web UI 会消费系统返回操作，保持当前页面和前台状态。运行时可通过通知停止。
 
 点击 Web UI 中的下载按钮后，在 Android 系统“保存到”界面选择位置，即可把文件导出到手机的下载目录或其他文档存储位置。
 
