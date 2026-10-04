@@ -137,6 +137,68 @@ class RuntimeSmokeTest {
                     text
                 }
                 assertTrue(body.isNotBlank())
+                suspend fun evaluate(script: String): String {
+                    val result = CompletableDeferred<String>()
+                    instrumentation.runOnMainSync {
+                        requireNotNull(findWebView(activity.window.decorView)).evaluateJavascript(script) { result.complete(it) }
+                    }
+                    return withTimeout(5_000) { result.await() }
+                }
+                suspend fun waitForPage(script: String) {
+                    try {
+                        withTimeout(10_000) { while (evaluate(script) != "true") delay(100) }
+                    } catch (error: kotlinx.coroutines.TimeoutCancellationException) {
+                        throw AssertionError("WebView condition failed: $script", error)
+                    }
+                }
+                // A real hit test matters: button.click() alone bypasses blocking layers.
+                waitForPage("[...document.querySelectorAll('[role=dialog] button')].some(b=>/^(继续|Continue)$|稍后配置|skip|later/i.test(b.textContent.trim()))")
+                evaluate("""
+                    [...document.querySelectorAll('[role="dialog"] button')]
+                      .find(b=>/^(继续|Continue)$/i.test(b.textContent.trim()))?.click();
+                """.trimIndent())
+                // The API-key dialog mounts after the preview dialog unmounts.
+                waitForPage("[...document.querySelectorAll('[role=dialog] button')].some(b=>/稍后配置|skip|later/i.test(b.textContent))")
+                evaluate("""
+                    [...document.querySelectorAll('[role="dialog"] button')]
+                      .find(b=>/稍后配置|skip|later/i.test(b.textContent))?.click();
+                """.trimIndent())
+                waitForPage("!document.querySelector('[role=dialog]')")
+                // Restore the closed drawer if a previous run saved fullscreen mode.
+                evaluate("""
+                    if(document.querySelector('[data-dsh-mobile-frame]').hasAttribute('data-rightbar-fullscreen'))
+                      [...document.querySelectorAll('[data-dsh-mobile-role=details] button')]
+                        .find(b=>/^Exit fullscreen$|^退出全屏$/.test(b.getAttribute('aria-label')||''))?.click();
+                """.trimIndent())
+                waitForPage("""
+                    (()=>{const b=document.querySelector('[data-dsh-mobile-ui-menu]');
+                    if(!b||b.hidden)return false;const r=b.getBoundingClientRect();
+                    return r.width>0&&b.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))})()
+                """.trimIndent())
+                evaluate("document.querySelector('[data-dsh-mobile-ui-menu]').click()")
+                waitForPage("!document.querySelector('[data-dsh-mobile-frame]').hasAttribute('data-sidebar-collapsed')")
+                waitForPage("""
+                    (()=>{const b=[...document.querySelectorAll('[data-dsh-mobile-role=sidebar] button')]
+                    .find(b=>/^(Settings|设置)$/.test(b.getAttribute('aria-label')||''));
+                    if(!b)return false;const r=b.getBoundingClientRect();
+                    return b.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))})()
+                """.trimIndent())
+                evaluate("[...document.querySelectorAll('[data-dsh-mobile-role=sidebar] button')].find(b=>/^(Settings|设置)$/.test(b.getAttribute('aria-label')||'')).click()")
+                waitForPage("!!document.querySelector('[data-dsh-mobile-settings]')")
+                evaluate("[...document.querySelectorAll('[data-dsh-mobile-settings] button')].find(b=>/^(Close|Close settings|关闭|关闭设置)$/i.test(b.getAttribute('aria-label')||b.textContent.trim())).click()")
+                waitForPage("!document.querySelector('[data-dsh-mobile-settings]')")
+                evaluate("document.querySelector('[data-dsh-mobile-ui-scrim]').click()")
+                waitForPage("document.querySelector('[data-dsh-mobile-frame]').hasAttribute('data-sidebar-collapsed')")
+                evaluate("[...document.querySelectorAll('button')].find(b=>/^Open right sidebar$|^打开右侧边栏$/.test(b.getAttribute('aria-label')||'')).click()")
+                waitForPage("document.querySelector('[data-dsh-mobile-role=details]').getBoundingClientRect().left < innerWidth / 2")
+                waitForPage("""
+                    (()=>{const b=[...document.querySelectorAll('[data-dsh-mobile-role=details] button')]
+                    .find(b=>/^Exit fullscreen$|^退出全屏$/.test(b.getAttribute('aria-label')||''));
+                    if(!b)return false;const r=b.getBoundingClientRect();
+                    return b.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))})()
+                """.trimIndent())
+                evaluate("[...document.querySelectorAll('[data-dsh-mobile-role=details] button')].find(b=>/^Exit fullscreen$|^退出全屏$/.test(b.getAttribute('aria-label')||'')).click()")
+                waitForPage("document.querySelector('[data-dsh-mobile-role=details]').getBoundingClientRect().left>=innerWidth")
                 Log.i(TAG, "${mode.name}: authenticated HTTP 200, unauthenticated HTTP 401, WebView rendered DSH")
                 // Test each mode separately to check backgrounding on devices that block
                 // bringing an activity back to the foreground from instrumentation.

@@ -70,7 +70,11 @@
     box-shadow: -12px 0 36px rgb(0 0 0 / 28%);
   }
 
-  [data-dsh-mobile-frame]:not([data-details-collapsed])
+  /* DSH renamed the collapse flag; fullscreen also opens the rightbar while
+     retaining its collapsed flag for the regular layout. */
+  [data-dsh-mobile-frame]:not([data-details-collapsed]):not([data-rightbar-collapsed])
+    > [data-dsh-mobile-role='details'],
+  [data-dsh-mobile-frame][data-rightbar-fullscreen]
     > [data-dsh-mobile-role='details'] {
     transform: translateX(0);
   }

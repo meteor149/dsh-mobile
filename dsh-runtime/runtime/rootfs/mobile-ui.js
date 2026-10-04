@@ -34,6 +34,7 @@
     return [...document.querySelectorAll('button[aria-label]:not([data-dsh-mobile-ui-menu])')].some(button => {
       if (sidebar?.contains(button)) return false
       const label = button.getAttribute('aria-label') ?? ''
+      if (/right.*sidebar|右.*侧边栏/iu.test(label)) return false
       return /sidebar|侧边栏/iu.test(label) && button.getClientRects().length > 0
     })
   }
@@ -177,7 +178,7 @@
     frameObserver = new MutationObserver(scheduleSync)
     frameObserver.observe(frame, {
       attributes: true,
-      attributeFilter: ['data-sidebar-collapsed', 'data-details-collapsed'],
+      attributeFilter: ['data-sidebar-collapsed', 'data-details-collapsed', 'data-rightbar-collapsed', 'data-rightbar-fullscreen'],
     })
   }
 
